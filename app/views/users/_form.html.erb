@@ -1,0 +1,58 @@
+<%= nested_form_for(@user) do |f| %>
+  <% if @user.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@user.errors.count, "error") %> prohibited this user from being saved:</h2>
+
+      <ul>
+      <% @user.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+<%= form_authenticity_token %>
+  <div class="field">
+    <%= f.label :name %><br>
+    <%= f.text_field :name %>
+  </div>
+  <div class="field">
+    <%= f.label :email %><br>
+    <%= f.text_field :email %>
+  </div>
+  <div class="field">
+    <%= f.label :creation_date %><br>
+    <%= f.date_select :creation_date %>
+  </div>
+  <div class="field">
+    <%= f.label :status %><br>
+    <%= f.text_field :status %>
+  </div>
+  <div class="field">
+    <%= f.label :podio_id %><br>
+    <%= f.number_field :podio_id %>
+  </div>
+<h3>Summary</h3>
+  <%= f.fields_for :sums do |sum_form| %>
+  <%= sum_form.text_area :text, size: "50x10"  %><br>
+  <%= sum_form.link_to_remove "Remove this summayry", :class => "btn btn-sm" %>
+<% end %>
+<p><%= f.link_to_add "Add a summmary", :sums, :class => "btn btn-sm btn-success" %></p>
+
+
+
+
+<h3>Languages</h3>
+<%= f.fields_for :languages do |p| %>
+  <%= p.label :language %>
+  <%= p.text_field :language  %>
+  <%= p.label :level %>
+  <%= p.text_field :level  %></br>
+
+  <%= p.link_to_remove "Remove this language", :class => "btn btn-sm" %>
+<% end %>
+<p><%= f.link_to_add "Add a language", :languages,  :class => "btn btn-sm btn-success" %></p>
+
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

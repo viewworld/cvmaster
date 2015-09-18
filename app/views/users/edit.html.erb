@@ -1,0 +1,1581 @@
+<div id="reactContent"></div>
+  
+  
+  
+  
+<script type="text/jsx">
+  var User = React.createClass({
+	getInitialState: function() {   
+      return {data: {
+		sums_attributes:[],
+		skills_attributes:[],
+		teches_attributes:[],
+		projects_attributes:[],
+		jobs_attributes:[],
+		languages_attributes:[]
+	  }};    
+    },
+    
+    componentDidMount: function() {   
+      $.ajax({
+        url: this.props.url,
+        dataType: 'json',
+        cache: false,
+        success: function(data) {
+          this.setState({data: data});
+        }.bind(this),
+        error: function(xhr, status, err) {
+          console.error(this.props.url, status, err.toString());
+        }.bind(this)
+      });	  
+    },
+	
+	handleFormSubmit: function(e, silent) {	
+		$.ajax({
+			url: "/users/"+this.state.data.id,
+			dataType: "json",
+			data: {"user": this.state.data, "authenticity_token": "<%= form_authenticity_token %>", "utf8": "✓"},
+			method: "PUT",
+			cache:false,
+			success: function(data) {
+				this.setState({data: data});
+				if (silent) return;
+				$.gritter.add({
+					image: '/img/icon-ok.png',
+					title: 'CV saved',
+					text: 'All data was saved to database'
+				});				
+			}.bind(this),
+			error: function(xhr, status, err) {
+				$.gritter.add({
+					image: '/img/icon-err.png',
+					title: 'Error',
+					text: 'Oops, there was an error. Please, try again. This may help: ' +  err.toString()
+				});					
+			  console.error(this.props.url, status, err.toString());
+			}.bind(this)		
+		});
+	},
+	
+	handleReorder: function(type, order) {
+		var data = this.state.data;
+		data[type+"_order"] = order.toString();
+		this.setState({data: data});
+		this.handleFormSubmit(null, true);
+	},
+	
+	handleSave: function(e) {
+		this.handleFormSubmit(null, false);
+		document.location.href = "/";
+		e.preventDefault();
+	},
+	
+	handleGeneralChange: function(e) {
+		var attr = e.target.name;
+		var val = e.target.value;
+		var data = this.state.data;
+		data[attr] = val;
+		this.setState({data: data});
+	},
+	
+	handleRequestedChange: function(e) {
+		var attr = e.target.name;
+		var val = e.target.checked;
+		var data = this.state.data;
+		data[attr] = val;
+		this.setState({data: data});
+		this.handleFormSubmit(null, true);
+	},
+	
+	handleSummaryChange: function(e) {
+		var data = this.state.data;
+		for (var i = 0; i < data.sums_attributes.length; i++) {
+			data.sums_attributes[i].add_pdf = null;
+		}
+		data.sums_attributes[e.id].text = e.text;
+		data.sums_attributes[e.id].add_pdf = true;
+		this.setState({data: data});
+	},
+	
+	handleSkillsChange: function(e) {
+		var data = this.state.data;
+		data.skills_attributes[e.id].skill_name = e.skill_name;
+		data.skills_attributes[e.id].years = e.years;
+		data.skills_attributes[e.id].months = e.months;
+		data.skills_attributes[e.id].add_pdf = e.add_pdf;
+		this.setState({data: data});
+	},
+	
+	handleTechesChange: function(e) {
+		var data = this.state.data;
+		data.teches_attributes[e.id].technology_name = e.technology_name;
+		data.teches_attributes[e.id].years = e.years;
+		data.teches_attributes[e.id].months = e.months;
+		data.teches_attributes[e.id].add_pdf = e.add_pdf;
+		this.setState({data: data});
+	},
+	
+	handleProjectsChange: function(e) {
+		var data = this.state.data;
+		data.projects_attributes[e.id].name = e.name;
+		data.projects_attributes[e.id].add_pdf = e.add_pdf;
+		data.projects_attributes[e.id].description = e.description;
+		data.projects_attributes[e.id].client = e.client;
+		data.projects_attributes[e.id].hours = e.hours;
+		data.projects_attributes[e.id].goal = e.goal;
+		data.projects_attributes[e.id].role = e.role;
+		data.projects_attributes[e.id].main_t = e.main_t;
+		data.projects_attributes[e.id].specific_t = e.specific_t;
+		data.projects_attributes[e.id].business_domain = e.business_domain;
+		this.setState({data: data});
+	},
+	
+	handleJobsChange: function(e) {
+		var data = this.state.data;
+		data.jobs_attributes[e.id].company_name = e.company_name;
+		data.jobs_attributes[e.id].add_pdf = e.add_pdf;
+		data.jobs_attributes[e.id].description = e.description;
+		data.jobs_attributes[e.id].role = e.role;
+		data.jobs_attributes[e.id].main_t = e.main_t;
+		this.setState({data: data});
+	},
+	
+	handleLanguagesChange: function(e) {
+		var data = this.state.data;
+		data.languages_attributes[e.id].language = e.language;
+		data.languages_attributes[e.id].level = e.level;
+		data.languages_attributes[e.id].add_pdf = e.add_pdf;
+		this.setState({data: data});
+	},
+	
+	handleDateChange: function(entity, id, type, val) {		
+		var data = this.state.data;
+		if (entity == "jobs") 
+			data.jobs_attributes[id][type] = val;
+		else	
+			data.projects_attributes[id][type] = val;
+		this.setState({data: data});
+	},
+	
+	handleDelete: function(url) {
+		var that = this;
+		$.ajax({
+			url: url,
+			method: "GET",
+			cache:false,
+			success: function(data) {
+				$.ajax({
+					url: that.props.url,
+					dataType: 'json',
+					cache: false,
+					success: function(data) {
+					  that.setState({data: data});
+					}.bind(this),
+					error: function(xhr, status, err) {
+					  console.error(that.props.url, status, err.toString());
+					}.bind(this)
+				});			
+			},
+			error: function(xhr, status, err) {
+				$.gritter.add({
+					image: '/img/icon-err.png',
+					title: 'Error',
+					text: 'Oops, there was an error. Please, try again. This may help: ' +  err.toString()
+				});					
+			}.bind(this)		
+		});	  
+	},
+	
+	exportPDF: function(e) {
+		$.ajax({
+			url: "/pdf_to_podio?user_id=" + this.state.data.id,
+			method: "GET",
+			cache:false,
+			success: function(data) {
+				$.gritter.add({
+					image: '/img/icon-ok.png',
+					title: 'PDF Export complete',
+					text: 'PDF was saved to Podio'
+				});		
+			}.bind(this)
+		});
+		e.preventDefault();
+	},
+	
+	delSummary: function(id) {
+		this.handleDelete("/delete_sum?sum_id=" + this.state.data.sums_attributes[id].id);
+	},
+	
+	delSkills: function(id) {
+		this.handleDelete("/delete_skill?skill_id=" + this.state.data.skills_attributes[id].id);
+	},
+	
+	delTeches: function(id) {
+		this.handleDelete("/delete_tech?tech_id=" + this.state.data.teches_attributes[id].id);
+	},
+	
+	delProjects: function(id) {
+		this.handleDelete("/delete_project?project_id=" + this.state.data.projects_attributes[id].id);
+	},
+	
+	delJobs: function(id) {
+		this.handleDelete("/delete_job?job_id=" + this.state.data.jobs_attributes[id].id);
+	},
+	
+	delLanguages: function(id) {
+		this.handleDelete("/delete_language?language_id=" + this.state.data.languages_attributes[id].id);
+	},
+	
+	addSummary: function() {
+		var data = this.state.data;
+		data.sums_attributes.push({add_pdf: false});
+		this.setState({data: data});
+	},	
+	
+	addSkills: function() {
+		var data = this.state.data;
+		data.skills_attributes.push({add_pdf: false});
+		this.setState({data: data});
+	},	
+	
+	addTeches: function() {
+		var data = this.state.data;
+		data.teches_attributes.push({add_pdf: false});
+		this.setState({data: data});
+	},	
+	
+	addProjects: function() {
+		var data = this.state.data;
+		data.projects_attributes.push({add_pdf: false});
+		this.setState({data: data});
+	},	
+	
+	addJobs: function() {
+		var data = this.state.data;
+		data.jobs_attributes.push({add_pdf: false});
+		this.setState({data: data});
+	},	
+	
+	addLanguages: function() {
+		var data = this.state.data;
+		data.languages_attributes.push({add_pdf: false});
+		this.setState({data: data});
+	},	
+	
+	checkAll: function(type) {
+		var data = this.state.data;
+		for (var i = 0; i < data[type+"_attributes"].length; i++)
+			data[type+"_attributes"][i].add_pdf=true;
+		this.setState({data: data});
+		this.handleFormSubmit(null, true);
+	},
+	
+	uncheckAll: function(type) {
+		var data = this.state.data;
+		for (var i = 0; i < data[type+"_attributes"].length; i++)
+			data[type+"_attributes"][i].add_pdf=false;
+		this.setState({data: data});	
+		this.handleFormSubmit(null, true);
+	},
+	
+	componentDidUpdate: function() {
+		$("input:checkbox, input:radio, input:file").not('[data-no-uniform="true"],#uniform-is-ajax').uniform(); 
+	},
+	
+	render: function() {
+		return (
+		  <div>
+			<div id="content" className="span12">
+
+				<ul className="breadcrumb">
+					<li>
+						<i className="icon-home"></i>
+						<a href="/">Home</a> 
+						<i className="icon-angle-right"></i>
+					</li>
+					<li>{this.state.data.name}</li>
+				</ul>
+
+				<div className="container">          
+					<ContentGeneral handleChange={this.handleGeneralChange} handleFormSubmit={this.handleFormSubmit} data={this.state.data} handleRequestedChange={this.handleRequestedChange} />
+					<ContentSummary handleChange={this.handleSummaryChange} handleFormSubmit={this.handleFormSubmit} data={this.state.data} addSummary={this.addSummary} delSummary={this.delSummary} />
+					<ContentSkills handleChange={this.handleSkillsChange} handleRequestedChange={this.handleRequestedChange} handleFormSubmit={this.handleFormSubmit} data={this.state.data} addSkills={this.addSkills} delSkills={this.delSkills} handleReorder={this.handleReorder} checkAll={this.checkAll} uncheckAll={this.uncheckAll} />
+					<ContentTeches handleChange={this.handleTechesChange} handleRequestedChange={this.handleRequestedChange} handleFormSubmit={this.handleFormSubmit} data={this.state.data} addTeches={this.addTeches} delTeches={this.delTeches} handleReorder={this.handleReorder} checkAll={this.checkAll} uncheckAll={this.uncheckAll} />
+					<ContentProjects handleChange={this.handleProjectsChange} handleRequestedChange={this.handleRequestedChange} handleFormSubmit={this.handleFormSubmit} data={this.state.data} addProjects={this.addProjects} handleDateChange={this.handleDateChange} delProjects={this.delProjects} handleReorder={this.handleReorder} checkAll={this.checkAll} uncheckAll={this.uncheckAll} />
+					<ContentJobs handleChange={this.handleJobsChange} handleRequestedChange={this.handleRequestedChange} handleFormSubmit={this.handleFormSubmit} data={this.state.data} addJobs={this.addJobs} handleDateChange={this.handleDateChange} delJobs={this.delJobs} handleReorder={this.handleReorder} checkAll={this.checkAll} uncheckAll={this.uncheckAll} />
+					<ContentLanguages handleChange={this.handleLanguagesChange} handleRequestedChange={this.handleRequestedChange} handleFormSubmit={this.handleFormSubmit} data={this.state.data} addLanguages={this.addLanguages} delLanguages={this.delLanguages} handleReorder={this.handleReorder} checkAll={this.checkAll} uncheckAll={this.uncheckAll} />
+					{this.props.children}
+				</div>
+			</div>
+			<div className="form-end container">
+				<button className="btn btn-primary input-xlarge" onClick={this.handleSave}><i className="icon-save"></i> Save and Close</button>  
+				<a className="btn btn-success input-large" target="_blank" href={"/pdf/download.pdf?user_id="+this.state.data.id+"&authenticity_token=<%= form_authenticity_token %>&utf8=✓"}><i className="halflings-icon download-alt white"></i> Get PDF</a>
+				<button className="btn input-large" onClick={this.exportPDF}><i className="icon-upload-alt"></i> Export PDF</button>
+			</div>
+
+			<div className="clearfix"></div>
+		  </div>
+		);
+	}
+  });
+  
+  var ContentGeneral = React.createClass({
+  
+	handleFormSubmit: function(e) {
+		this.props.handleFormSubmit(e);
+		e.preventDefault();
+	},
+	
+    render: function() {
+      return (
+	   <div className="row">
+		<div className="box span12">
+			<div className="box-header" data-original-title>
+				<h2><i className="halflings-icon white user"></i><span className="break"></span>General</h2>
+				<div className="box-icon">
+					<a href={this.props.data.podio_url} target="_blank" className="btn-modal-popup"><i className="halflings-icon white link"></i> Open Podio</a>
+				</div>
+			</div>
+			<div className="box-content">
+				<form className="form-horizontal" onSubmit={this.handleFormSubmit}>
+					<fieldset>
+					  <div className="row">
+						<div className="span6">
+							<div className="control-group">
+								<label className="control-label" for="inputName">Name</label>
+								<div className="controls">
+								  <input className="input-xlarge" id="inputName" type="text" value={this.props.data.name} onChange={this.props.handleChange} name="name" />
+								</div>
+							</div>
+							<div className="control-group">
+								<label className="control-label" for="inputNickname">Nickname</label>
+								<div className="controls">
+								  <input className="input-xlarge" id="inputNickname" type="text" value={this.props.data.nickname} onChange={this.props.handleChange} name="nickname" />
+								</div>
+							</div>
+							<div className="control-group">
+								<label className="control-label" for="inputEmail">Email</label>
+								<div className="controls">
+								  <input className="input-xlarge" id="inputEmail" type="text" value={this.props.data.email} onChange={this.props.handleChange} name="email" />
+								</div>
+							</div>
+							<div className="control-group">
+								<label className="control-label" for="inputPhone">Phone</label>
+								<div className="controls">
+								  <input className="input-xlarge" id="inputPhone" type="text" value={this.props.data.phone} onChange={this.props.handleChange} name="phone" />
+								</div>
+							</div>
+							  <div className="control-group">
+								<label className="control-label" for="inputSkype">Skype</label>
+								<div className="controls">
+								  <input className="input-xlarge" id="inputSkype" type="text" value={this.props.data.skype} onChange={this.props.handleChange} name="skype" />
+								</div>
+							  </div>
+						</div>
+						<div className="span6">
+							<div className="control-group">
+								<label className="control-label" for="inputURL">Form URL</label>
+								<div className="controls">
+								  <input className="input-xlarge" id="inputURL" type="text" value={this.props.data.form_url} readOnly />
+								  <label className="checkbox inline" style={{paddingLeft: "0"}} >
+									<input type="checkbox" ref="share" name="share_form" checked={this.props.data.share_form} onChange={this.props.handleRequestedChange} /> Share form
+								  </label>												  
+								</div>
+							</div>
+							<div className="control-group">
+								<label className="control-label" for="inputGreeting">Form message</label>
+								<div className="controls">
+								  <textarea rows="8" className="input-xlarge" name="greeting" id="inputGreeting" type="text" value={this.props.data.greeting} onChange={this.props.handleChange}></textarea>
+								</div>
+							</div>
+						</div>	
+					</div>
+					  <div className="form-actions">
+						<button type="submit" className="btn btn-primary">Save changes</button>
+					  </div>
+					</fieldset>
+				  </form>			
+			</div>
+		  </div>
+		</div>
+      );
+    }
+  });
+  
+  var ContentSummary = React.createClass({		
+	handleChange: function(e){
+		this.props.handleChange(e);
+	},
+	
+	render: function() {
+		var that = this;
+		var i = -1;
+		var contentSummaryNodes = this.props.data.sums_attributes.map(function(node){
+			i++
+			return (
+				<ContentSummaryNode id={i} text={node.text} add_pdf={node.add_pdf} handleChange={that.handleChange} handleFormSubmit={that.props.handleFormSubmit} delNode={that.props.delSummary} />
+			);
+		});  		
+		
+		if (this.props.data.sums_attributes.length == 0) {
+			contentSummaryNodes = <p>No summaries found.</p>;
+		}
+		
+		return (		
+			<div className="row">
+			  <div className="box span12 fp-summary">
+				<div className="box-header" data-original-title>
+				  <h2><i className="halflings-icon white star"></i><span className="break"></span>Summary</h2>
+				</div>
+				<div className="box-content">
+					{contentSummaryNodes}
+				  <div className="form-actions">
+				  <button className="btn btn-success" onClick={this.props.addSummary}>Add new summary</button>
+				  </div>
+				</div>
+			  </div>
+			</div>			
+		);
+	}
+  });
+  
+  var ContentSummaryNode = React.createClass({ 	
+	handleChange: function(e) {
+		var val = React.findDOMNode(this.refs.text).value;
+		var add_pdf = React.findDOMNode(this.refs.optionsAddToPdf).checked;
+		this.props.handleChange({id: this.props.id, text: val, add_pdf: add_pdf});
+		if (e.target.type == "radio") this.props.handleFormSubmit(null, true);
+	},
+	
+	handleTinyChange: function(val) {
+		var add_pdf = React.findDOMNode(this.refs.optionsAddToPdf).checked;
+		this.props.handleChange({id: this.props.id, text: val, add_pdf: add_pdf});
+	},
+	
+	delNode: function(e) {
+		var text = tinymce.get("tinymcesum"+this.props.id).getContent();
+		this.handleTinyChange(text);
+		if (text) {
+			if (confirm("Are you sure you want to delete '" + $(text.substring(0,50)).text() + "...'? This can't be undone.") == false){
+				e.preventDefault();
+				return;
+			}
+		}
+		React.findDOMNode(this.refs.well).className="project-box well";
+		this.props.delNode(this.props.id);
+		e.preventDefault();
+	},
+	
+	allowEdit: function(e){
+		React.findDOMNode(this.refs.well).className="project-box well editing";
+		e.preventDefault();
+	},
+	
+	disallowEdit: function(e){
+		React.findDOMNode(this.refs.well).className="project-box well";
+		this.handleTinyChange(tinymce.get("tinymcesum"+this.props.id).getContent());
+		this.props.handleFormSubmit();
+		e.preventDefault();
+	},
+	
+	componentDidMount: function() {
+		var that = this;
+		tinymce.init({
+            selector: "#tinymcesum" + this.props.id,
+			plugins: "autolink link",
+			menubar: false,
+			toolbar: "undo redo | fontsizeselect | bold italic underline strikethrough | alignleft aligncenter alignright | bullist numlist outdent indent | removeformat | link unlink ",
+        });		
+		if (typeof this.props.text == "undefined") {
+			React.findDOMNode(this.refs.well).className="project-box well editing";
+		}
+	},
+	
+	componentWillUnmount: function() {
+		tinymce.get("tinymcesum" + this.props.id).remove();		
+	},
+  
+	render: function() {
+		return (
+			<div className="project-box well" ref="well">
+			  <form>
+				<textarea rows="4" value={this.props.text} onChange={this.handleChange} ref="text" id={"tinymcesum"+this.props.id}></textarea>
+				<div className="content" dangerouslySetInnerHTML={{__html: this.props.text}}></div>
+				<button className="btn" onClick={this.allowEdit}>Edit</button>
+				<button className="btn btn-primary" onClick={this.disallowEdit}>Save</button>
+				<a className="btn btn-remove red" href="#" onClick={this.delNode}>
+				  <i className="icon-remove"></i>  
+				</a>
+				<div className="control-group">
+				  <div className="controls">
+					<label className="radio">
+					<input type="radio" name="optionsAddToPdf" ref="optionsAddToPdf" value={this.props.id} checked={this.props.add_pdf} onChange={this.handleChange} />
+					Add to PDF
+					</label>
+				  </div>
+				</div>
+			   </form>
+			  </div>	
+		);
+	}
+  });
+  
+  var ContentSkills = React.createClass({		
+	handleChange: function(e){
+		this.props.handleChange(e);
+	},
+	
+	componentDidMount: function() {
+		var that = this;
+		$( ".skills.sortable" ).sortable({ 
+			placeholder: "ui-sortable-placeholder-table",
+			stop: function( event, ui ) {
+				var arr = [];
+				var type = $(ui.item).parents(".sortable").attr("data-type");
+				$(ui.item).parents(".sortable").find("tr").each(function(){
+					arr.push( $(this).attr("data-id") );
+				});
+				that.props.handleReorder(type, arr);
+			},
+			'start': function (event, ui) {
+				ui.placeholder.html("<td colspan='6'></td>")
+			},
+			forcePlaceholderSize: true,
+			axis: "y"  
+		});	
+	},
+	
+	selectAll: function(e) {
+		var checked = 0;
+		for (var i = 0; i < this.props.data.skills_attributes.length; i++)
+			if (this.props.data.skills_attributes[i].add_pdf)
+				checked++;
+		if (checked == this.props.data.skills_attributes.length)
+			this.props.uncheckAll("skills");
+		else
+			this.props.checkAll("skills");
+		e.preventDefault();
+	},
+	
+	render: function() {
+		var that = this;
+		var i = -1;
+		var ContentSkillsNodes = this.props.data.skills_attributes.map(function(node){
+			i++
+			return (
+				<ContentSkillsNode id={i} real_id={node.id} skill_name={node.skill_name} years={node.years} months={node.months} add_pdf={node.add_pdf} handleChange={that.handleChange} handleFormSubmit={that.props.handleFormSubmit} delNode={that.props.delSkills} />
+			);
+		});
+		
+		var toggleClass = "icon-check";
+		var checked = 0;
+		
+		for (var i = 0; i < this.props.data.skills_attributes.length; i++)
+			if (this.props.data.skills_attributes[i].add_pdf)
+				checked++;
+		if (checked == this.props.data.skills_attributes.length)
+			toggleClass = "icon-check-empty"
+		
+		if (this.props.data.skills_attributes.length == 0) {
+			ContentSkillsNodes = <tr><td>No skills found.</td></tr>;
+		}
+		
+		
+		return (		
+			<div className="row">
+			  <div className="box span12 fp-summary">
+				<div className="box-header">
+				  <h2><i className="icon-key"></i><span className="break"></span>Key skills</h2>
+				  <div className="box-icon">
+					<a className="" onClick={this.selectAll} href="#"><i className={toggleClass}></i> Toggle all</a>
+					<label className="checkbox inline">
+					  <div className="checker"><span><input type="checkbox" name="request_skills" checked={this.props.data.request_skills} onChange={this.props.handleRequestedChange} /></span></div> Request information
+					</label>
+				  </div>              
+				</div>
+				<div className="box-content">
+				 <table className="table table-striped table-bordered align-mid last-col-small table-editable">
+				  <tbody className="skills sortable" data-type="skills">
+					{ContentSkillsNodes}
+				  </tbody>
+				  </table>                  
+				  <div className="form-actions">
+				  <button className="btn btn-success" onClick={this.props.addSkills}>Add new key skill</button>
+				  </div>
+				</div>
+			  </div>
+			</div>		
+		);
+	}
+  });
+  
+  var ContentSkillsNode = React.createClass({ 	
+	handleChange: function(e) {
+		var add_pdf = React.findDOMNode(this.refs.optionsAddToPdf).checked;
+		var years = React.findDOMNode(this.refs.years).value;
+		var months = React.findDOMNode(this.refs.months).value;
+		var skill_name = React.findDOMNode(this.refs.skill_name).value;
+		this.props.handleChange({id: this.props.id, skill_name: skill_name, years: years, months: months, add_pdf: add_pdf});
+		if (e.target.type == "checkbox") this.props.handleFormSubmit(null, true);
+		
+		if ( (isNaN(parseInt(years, 10))) || (parseInt(years,10) < 0) ) 
+			React.findDOMNode(this.refs.years).className="input fp-autowidth red";
+		else
+			React.findDOMNode(this.refs.years).className="input fp-autowidth";
+			
+		if ( ( isNaN(parseInt(months, 10)) ) || (parseInt(months,10) > 11) || (parseInt(months,10) < 0) )
+			React.findDOMNode(this.refs.months).className="input fp-autowidth red";
+		else
+			React.findDOMNode(this.refs.months).className="input fp-autowidth";
+	},
+	
+	delNode: function(e) {
+		if (this.props.text)
+			if (confirm("Are you sure you want to delete " + this.props.skill_name + "? This can't be undone.") == false)
+				return;
+		React.findDOMNode(this.refs.well).className="";
+		this.props.delNode(this.props.id);
+		e.preventDefault();
+	},
+	
+	allowEdit: function(e){
+		React.findDOMNode(this.refs.well).className="editing";
+		e.preventDefault();
+	},
+	
+	disallowEdit: function(e){
+		if ($(e.target).parents("tr").find("input.red").length) return;
+		React.findDOMNode(this.refs.well).className="";
+		this.props.handleFormSubmit();
+		e.preventDefault();
+	},
+	
+	componentDidMount: function() {
+		if (typeof this.props.skill_name == "undefined") {
+			this.allowEdit();
+		}
+	},
+  
+	render: function() {
+	
+		return (
+			<tr className="" ref="well" data-id={this.props.real_id}>
+				<td><span className="title">{this.props.skill_name}</span><input placeholder="Skill" ref="skill_name" className="input" type="text" value={this.props.skill_name} onChange={this.handleChange} /></td>
+				<td><span className="title">{this.props.years} years</span><input ref="years" size="1" className="input fp-autowidth" type="text" value={this.props.years} onChange={this.handleChange} /><span className="llabel"> years</span></td>
+				<td><span className="title">{this.props.months} months</span><input ref="months" size="1" className="input fp-autowidth" type="text" value={this.props.months} onChange={this.handleChange} /><span className="llabel"> months</span></td>
+				<td>
+					<label className="checkbox inline">
+					  <div className="checker"><span><input ref="optionsAddToPdf" type="checkbox" value={this.props.id} checked={this.props.add_pdf} onChange={this.handleChange} /></span></div> Add to PDF
+					</label>         					
+				</td>
+				<td>
+					<a className="btn btn-info" href="#" onClick={this.allowEdit}>
+					  <i className="icon-pencil"></i>  
+					</a>
+					<a className="btn btn-success btn-save" href="#" onClick={this.disallowEdit}>
+					  <i className="icon-save"></i>  
+					</a>
+					<a className="btn btn-remove red" href="#" onClick={this.delNode}>
+					  <i className="icon-remove"></i>  
+					</a>
+				</td>
+			</tr>	
+		);
+	}
+  });
+  
+  var ContentTeches = React.createClass({		
+	handleChange: function(e){
+		this.props.handleChange(e);
+	},
+	
+	componentDidMount: function() {
+		var that = this;
+		$( ".teches.sortable" ).sortable({ 
+			placeholder: "ui-sortable-placeholder-table",
+			stop: function( event, ui ) {
+				var arr = [];
+				var type = $(ui.item).parents(".sortable").attr("data-type");
+				$(ui.item).parents(".sortable").find("tr").each(function(){
+					arr.push( $(this).attr("data-id") );
+				});
+				that.props.handleReorder(type, arr);
+			},
+			'start': function (event, ui) {
+				ui.placeholder.html("<td colspan='6'></td>")
+			},
+			forcePlaceholderSize: true,
+			axis: "y"  
+		});	
+	},
+	
+	selectAll: function(e) {
+		var checked = 0;
+		for (var i = 0; i < this.props.data.teches_attributes.length; i++)
+			if (this.props.data.teches_attributes[i].add_pdf)
+				checked++;
+		if (checked == this.props.data.teches_attributes.length)
+			this.props.uncheckAll("teches");
+		else
+			this.props.checkAll("teches");
+		e.preventDefault();
+	},
+	
+	render: function() {
+		var that = this;
+		var i = -1;
+		var ContentTechNodes = this.props.data.teches_attributes.map(function(node){
+			i++
+			return (
+				<ContentTechesNode id={i} real_id={node.id} technology_name={node.technology_name} years={node.years} months={node.months} add_pdf={node.add_pdf} handleChange={that.handleChange} handleFormSubmit={that.props.handleFormSubmit} delNode={that.props.delTeches} />
+			);
+		});  		
+		
+		var toggleClass = "icon-check";
+		var checked = 0;
+		
+		for (var i = 0; i < this.props.data.teches_attributes.length; i++)
+			if (this.props.data.teches_attributes[i].add_pdf)
+				checked++;
+		if (checked == this.props.data.teches_attributes.length)
+			toggleClass = "icon-check-empty"
+		
+		if (this.props.data.teches_attributes.length == 0) {
+			ContentTechNodes = <tr><td>No technologies found.</td></tr>;
+		}
+		return (		
+			<div className="row">
+			  <div className="box span12 fp-summary">
+				<div className="box-header">
+				  <h2><i className="icon-cogs"></i><span className="break"></span>Technologies</h2>
+				  <div className="box-icon">
+					<a className="" onClick={this.selectAll} href="#"><i className={toggleClass}></i> Toggle all</a>
+					<label className="checkbox inline">
+					  <div className="checker"><span><input type="checkbox" name="request_teches" checked={this.props.data.request_teches} onChange={this.props.handleRequestedChange} /></span></div> Request information
+					</label>
+				  </div>              
+				</div>
+				<div className="box-content">
+				 <table className="table table-striped table-bordered align-mid last-col-small table-editable">
+				  <tbody className="teches sortable" data-type="teches">
+					{ContentTechNodes}
+				  </tbody>
+				  </table>                  
+				  <div className="form-actions">
+				  <button className="btn btn-success" onClick={this.props.addTeches}>Add new tech</button>
+				  </div>
+				</div>
+			  </div>
+			</div>		
+		);
+	}
+  });
+  
+  var ContentTechesNode = React.createClass({ 	
+	handleChange: function(e) {
+		var add_pdf = React.findDOMNode(this.refs.optionsAddToPdf).checked;
+		var years = React.findDOMNode(this.refs.years).value;
+		var months = React.findDOMNode(this.refs.months).value;
+		var technology_name = React.findDOMNode(this.refs.technology_name).value;
+		this.props.handleChange({id: this.props.id, technology_name: technology_name, years: years, months: months, add_pdf: add_pdf});
+		if (e.target.type == "checkbox") this.props.handleFormSubmit(null, true);
+		
+		if ( (isNaN(parseInt(years, 10))) || (parseInt(years,10) < 0) ) 
+			React.findDOMNode(this.refs.years).className="input fp-autowidth red";
+		else
+			React.findDOMNode(this.refs.years).className="input fp-autowidth";
+			
+		if ( ( isNaN(parseInt(months, 10)) ) || (parseInt(months,10) > 12) || (parseInt(months,10) < 0) )
+			React.findDOMNode(this.refs.months).className="input fp-autowidth red";
+		else
+			React.findDOMNode(this.refs.months).className="input fp-autowidth";
+	},
+	
+	delNode: function(e) {
+		if (this.props.text)
+			if (confirm("Are you sure you want to delete " + this.props.technology_name + "? This can't be undone.") == false)
+				return;
+		React.findDOMNode(this.refs.well).className="";
+		this.props.delNode(this.props.id);
+		e.preventDefault();
+	},
+	
+	allowEdit: function(e){
+		React.findDOMNode(this.refs.well).className="editing";
+		e.preventDefault();
+	},
+	
+	disallowEdit: function(e){
+		if ($(e.target).parents("tr").find("input.red").length) return;
+		React.findDOMNode(this.refs.well).className="";
+		this.props.handleFormSubmit();
+		e.preventDefault();
+	},
+	
+	componentDidMount: function() {
+		if (typeof this.props.technology_name == "undefined") {
+			this.allowEdit();
+		}
+	},
+  
+	render: function() {
+		return (
+			<tr className="" ref="well" data-id={this.props.real_id}>
+				<td><span className="title">{this.props.technology_name}</span><input placeholder="Technology" ref="technology_name" className="input" type="text" value={this.props.technology_name} onChange={this.handleChange} /></td>
+				<td><span className="title">{this.props.years} years</span><input ref="years" size="1" className="input fp-autowidth" type="text" value={this.props.years} onChange={this.handleChange} /><span className="llabel"> years</span></td>
+				<td><span className="title">{this.props.months} months</span><input ref="months" size="1" className="input fp-autowidth" type="text" value={this.props.months} onChange={this.handleChange} /><span className="llabel"> months</span></td>
+				<td>
+					<label className="checkbox inline">
+					  <div className="checker"><span><input ref="optionsAddToPdf" type="checkbox" value={this.props.id} checked={this.props.add_pdf} onChange={this.handleChange} /></span></div> Add to PDF
+					</label>         					
+				</td>
+				<td>
+					<a className="btn btn-info" href="#" onClick={this.allowEdit}>
+					  <i className="icon-pencil"></i>  
+					</a>
+					<a className="btn btn-success btn-save" href="#" onClick={this.disallowEdit}>
+					  <i className="icon-save"></i>  
+					</a>
+					<a className="btn btn-remove red" href="#" onClick={this.delNode}>
+					  <i className="icon-remove"></i>  
+					</a>					
+				</td>
+			</tr>	
+		);
+	}
+  });
+  
+  var ContentProjects = React.createClass({		
+	handleChange: function(e){
+		this.props.handleChange(e);
+	},
+	
+	componentDidMount: function() {
+		var that = this;
+		$( ".projects.sortable" ).sortable({ 
+			placeholder: "ui-sortable-placeholder",
+			stop: function( event, ui ) {
+				var arr = [];
+				var type = $(ui.item).parents(".sortable").attr("data-type");
+				$(ui.item).parents(".sortable").find(".well").each(function(){
+					arr.push( $(this).attr("data-id") );
+				});
+				that.props.handleReorder(type, arr);
+			},
+			forcePlaceholderSize: true,
+			axis: "y"  
+		});	
+	},
+	
+	selectAll: function(e) {
+		var checked = 0;
+		for (var i = 0; i < this.props.data.projects_attributes.length; i++)
+			if (this.props.data.projects_attributes[i].add_pdf)
+				checked++;
+		if (checked == this.props.data.projects_attributes.length)
+			this.props.uncheckAll("projects");
+		else
+			this.props.checkAll("projects");
+		e.preventDefault();
+	},
+	
+	render: function() {
+		var that = this;
+		var i = -1;
+		var ContentProjectsNodes = this.props.data.projects_attributes.map(function(node, k){
+			i++
+			return (
+				<ContentProjectsNode key={k} id={i} real_id={node.id} business_domain={node.business_domain} client={node.client} description={node.description} start_date={node.start_date} end_date={node.end_date} goal={node.goal} hours={node.hours} main_t={node.main_t} specific_t={node.specific_t} name={node.name} role={node.role} add_pdf={node.add_pdf} handleChange={that.handleChange} handleFormSubmit={that.props.handleFormSubmit} handleDateChange={that.props.handleDateChange} delNode={that.props.delProjects} />
+			);
+		});  		
+		
+		var toggleClass = "icon-check";
+		var checked = 0;
+		
+		for (var i = 0; i < this.props.data.projects_attributes.length; i++)
+			if (this.props.data.projects_attributes[i].add_pdf)
+				checked++;
+		if (checked == this.props.data.projects_attributes.length)
+			toggleClass = "icon-check-empty"
+		
+		if (this.props.data.projects_attributes.length == 0) {
+			ContentProjectsNodes = <p>No projects found.</p>;
+		}
+		
+		return (		
+			<div className="row">
+			  <div className="box span12 fp-summary">
+				<div className="box-header">
+				  <h2><i className="icon-briefcase"></i><span className="break"></span>Projects</h2>
+				  <div className="box-icon">
+					<a className="" onClick={this.selectAll} href="#"><i className={toggleClass}></i> Toggle all</a>
+					<label className="checkbox inline">
+					  <div className="checker"><span><input type="checkbox" name="request_projects" checked={this.props.data.request_projects} onChange={this.props.handleRequestedChange} /></span></div> Request information
+					</label>
+				  </div>              
+				</div>				
+				<div className="box-content">
+				  <div className="projects sortable" data-type="skills">
+					{ContentProjectsNodes}
+				  </div>
+				  <div className="form-actions">
+				  <button className="btn btn-success" onClick={this.props.addProjects}>Add new project</button>
+				  </div>
+				</div>
+			  </div>
+			</div>		
+		);
+	}
+  });
+  
+  var ContentProjectsNode = React.createClass({ 	
+	handleChange: function(e) {
+		var add_pdf = React.findDOMNode(this.refs.optionsAddToPdf).checked;
+		var name = React.findDOMNode(this.refs.name).value;
+		var description = React.findDOMNode(this.refs.description).value;
+		var start_date = React.findDOMNode(this.refs.start_date).value;
+		var end_date = React.findDOMNode(this.refs.end_date).value;
+		var client = React.findDOMNode(this.refs.client).value;
+		var hours = React.findDOMNode(this.refs.hours).value;
+		var goal = React.findDOMNode(this.refs.goal).value;
+		var role = React.findDOMNode(this.refs.role).value;
+		var main_t = React.findDOMNode(this.refs.main_t).value;
+		var specific_t = React.findDOMNode(this.refs.specific_t).value;
+		var business_domain = React.findDOMNode(this.refs.business_domain).value;
+		this.props.handleChange({id: this.props.id, name: name, hours: hours, description: description, start_date: start_date, end_date: end_date, client: client, goal: goal, role: role, business_domain: business_domain, main_t: main_t, specific_t: specific_t, add_pdf: add_pdf});
+		if (e.target.type == "checkbox") this.props.handleFormSubmit(null, true);
+	},
+	
+	handleTinyChange: function(val) {
+		var add_pdf = React.findDOMNode(this.refs.optionsAddToPdf).checked;
+		var name = React.findDOMNode(this.refs.name).value;
+		var description = val;
+		var start_date = React.findDOMNode(this.refs.start_date).value;
+		var end_date = React.findDOMNode(this.refs.end_date).value;
+		var client = React.findDOMNode(this.refs.client).value;
+		var hours = React.findDOMNode(this.refs.hours).value;
+		var goal = React.findDOMNode(this.refs.goal).value;
+		var role = React.findDOMNode(this.refs.role).value;
+		var main_t = React.findDOMNode(this.refs.main_t).value;
+		var specific_t = React.findDOMNode(this.refs.specific_t).value;
+		var business_domain = React.findDOMNode(this.refs.business_domain).value;
+		this.props.handleChange({id: this.props.id, name: name, hours: hours, description: description, start_date: start_date, end_date: end_date, client: client, goal: goal, role: role, business_domain: business_domain, main_t: main_t, specific_t: specific_t, add_pdf: add_pdf});
+	},
+	
+	delNode: function(e) {
+		var text = tinymce.get("tinymceproj"+this.props.id).getContent();
+		this.handleTinyChange(text);
+		if (text) {
+			if (confirm("Are you sure you want to delete '" + $(text.substring(0,50)).text() + "...'? This can't be undone.") == false){
+				e.preventDefault();
+				return;
+			}
+		}
+		React.findDOMNode(this.refs.well).className="project-box well";
+		this.props.delNode(this.props.id);
+		e.preventDefault();
+	},
+	
+	allowEdit: function(e){
+		React.findDOMNode(this.refs.well).className="project-box well editing";
+		e.preventDefault();
+	},
+	
+	disallowEdit: function(e){
+		React.findDOMNode(this.refs.well).className="project-box well";
+		this.handleTinyChange(tinymce.get("tinymceproj"+this.props.id).getContent());
+		this.props.handleFormSubmit();
+		e.preventDefault();
+	},
+	
+	componentDidMount: function() {
+		var that = this;
+		tinymce.init({
+            selector: "#tinymceproj" + this.props.id,
+			plugins: "autolink link",
+			menubar: false,
+			toolbar: "undo redo | fontsizeselect | bold italic underline strikethrough | alignleft aligncenter alignright | bullist numlist outdent indent | removeformat | link unlink ",
+        });	
+        $('.datepicker').datepicker({dateFormat: 'dd/mm/yy', onSelect: function(date) {
+			that.props.handleDateChange($(this).attr("data-entity"), $(this).attr("data-id"), $(this).attr("data-type"), $(this).val());
+		}});
+		
+		if (typeof this.props.name == "undefined") {
+			React.findDOMNode(this.refs.well).className="project-box well editing";
+		}		
+    },
+	
+	componentWillUnmount: function() {
+		tinymce.get("tinymceproj" + this.props.id).remove();		
+	},
+  
+	render: function() {
+		if (this.props.start_date && this.props.end_date) {
+		
+			var pa = this.props.start_date.split("/");
+			var pb = this.props.end_date.split("/");
+			var a = new Date(pa[2], pa[1], pa[0]);
+			var b = new Date(pb[2], pb[1], pb[0]);
+
+			var duration = getNiceTime(b, a, 1, false)
+		
+		}
+	
+		return (		
+			<div className="project-box well" ref="well" data-id={this.props.real_id}>
+                <div className="project-box-header">
+                  <h3><span className="title">{this.props.name}</span><input placeholder="Project name" type="text" ref="name" className="input" value={this.props.name} onChange={this.handleChange} /></h3>
+                  <div className="project-box-date">
+                    <div className="project-box-date_display">
+                      <span className="title">{this.props.start_date} - {this.props.end_date}</span>
+                      <div className="project-box-date-duration">{duration}</div>
+                    </div>
+                    <div className="project-box-date_edit">
+                      <div>
+                        <label className="control-label" for="date01">Start Date</label>
+                        <div className="controls">
+                          <input type="text" data-id={this.props.id} data-entity="projects" data-type="start_date" className="datepicker" ref="start_date" value={this.props.start_date} onChange={this.handleChange} />
+                        </div>                      
+                      </div>
+                      <div>
+                        <label className="control-label" for="date01">End Date</label>
+                        <div className="controls">
+                          <input type="text" data-id={this.props.id} data-entity="projects" data-type="end_date" className="datepicker" ref="end_date" value={this.props.end_date} onChange={this.handleChange} />
+                        </div>                      
+                      </div>
+                    </div>
+                  </div>
+                  <div className="clearfix"></div>
+                </div>
+				<textarea rows="4" value={this.props.description} onChange={this.handleChange} ref="description" id={"tinymceproj"+this.props.id}></textarea>
+				<div className="content" dangerouslySetInnerHTML={{__html: this.props.description}}></div>
+                <ul>
+                  <li><strong>Client:</strong> <span className="title">{this.props.client}</span><input ref="client" type="text" className="input" value={this.props.client} onChange={this.handleChange} /></li>
+                  <li><strong>Hours:</strong> <span className="title">{this.props.hours}</span><input ref="hours" type="text" className="input" value={this.props.hours} onChange={this.handleChange} /></li>
+                  <li><strong>Goal:</strong> <span className="title">{this.props.goal}</span><input ref="goal" type="text" className="input" value={this.props.goal} onChange={this.handleChange} /></li>
+                  <li><strong>Role:</strong> <span className="title">{this.props.role}</span><input ref="role" type="text" className="input" value={this.props.role} onChange={this.handleChange} /></li>
+                  <li><strong>Main tech:</strong> <span className="title">{this.props.main_t}</span><textarea rows="2" ref="main_t" className="input fp-doublewidth" value={this.props.main_t} onChange={this.handleChange} /></li>
+                  <li><strong>Specific tech:</strong> <span className="title">{this.props.specific_t}</span><textarea rows="2" ref="specific_t" className="input fp-doublewidth" value={this.props.specific_t} onChange={this.handleChange} /></li>
+                  <li><strong>Business domain:</strong> <span className="title">{this.props.business_domain}</span><input ref="business_domain" type="text" className="input" value={this.props.business_domain} onChange={this.handleChange} /></li>
+                </ul>
+                <button className="btn" onClick={this.allowEdit}>Edit</button>
+				<button className="btn btn-primary btn-save" onClick={this.disallowEdit}>Save</button>
+				<a className="btn btn-remove red" href="#" onClick={this.delNode}>
+				  <i className="icon-remove"></i>  
+				</a>				
+                <div className="control-group">
+                  <div className="controls">
+                    <label className="checkbox inline">
+                      <div classNameName="checker"><span><input ref="optionsAddToPdf" type="checkbox" value={this.props.id} checked={this.props.add_pdf} onChange={this.handleChange} /></span></div> Add to PDF
+                    </label>                                  
+                  </div>
+                </div>
+              </div>
+		);
+	}
+  });
+  
+  var ContentJobs = React.createClass({		
+	handleChange: function(e){
+		this.props.handleChange(e);
+	},
+	
+	componentDidMount: function() {
+		var that = this;
+		$( ".jobs.sortable" ).sortable({ 
+			placeholder: "ui-sortable-placeholder",
+			stop: function( event, ui ) {
+				var arr = [];
+				var type = $(ui.item).parents(".sortable").attr("data-type");
+				$(ui.item).parents(".sortable").find(".well").each(function(){
+					arr.push( $(this).attr("data-id") );
+				});
+				that.props.handleReorder(type, arr);
+			},
+			forcePlaceholderSize: true,
+			axis: "y"  
+		});	
+	},
+	
+	selectAll: function(e) {
+		var checked = 0;
+		for (var i = 0; i < this.props.data.jobs_attributes.length; i++)
+			if (this.props.data.jobs_attributes[i].add_pdf)
+				checked++;
+		if (checked == this.props.data.jobs_attributes.length)
+			this.props.uncheckAll("jobs");
+		else
+			this.props.checkAll("jobs");
+		e.preventDefault();
+	},
+	
+	render: function() {
+		var that = this;
+		var i = -1;
+		var ContentJobsNodes = this.props.data.jobs_attributes.map(function(node, k){
+			i++
+			return (
+				<ContentJobsNode key={k} id={i} real_id={node.id} description={node.description} start_date={node.start_date} end_date={node.end_date} main_t={node.main_t} company_name={node.company_name} role={node.role} add_pdf={node.add_pdf} handleChange={that.handleChange} handleFormSubmit={that.props.handleFormSubmit} handleDateChange={that.props.handleDateChange} delNode={that.props.delJobs} />
+			);
+		});  		
+		
+		var toggleClass = "icon-check";
+		var checked = 0;
+		
+		for (var i = 0; i < this.props.data.jobs_attributes.length; i++)
+			if (this.props.data.jobs_attributes[i].add_pdf)
+				checked++;
+		if (checked == this.props.data.jobs_attributes.length)
+			toggleClass = "icon-check-empty"
+		
+		if (this.props.data.jobs_attributes.length == 0) {
+			ContentJobsNodes = <p>No jobs found.</p>;
+		}
+		
+		return (		
+			<div className="row">
+			  <div className="box span12 fp-summary">
+				<div className="box-header">
+				  <h2><i className="icon-building"></i><span className="break"></span>Employment</h2>
+				  <div className="box-icon">
+					<a className="" onClick={this.selectAll} href="#"><i className={toggleClass}></i> Toggle all</a>
+					<label className="checkbox inline">
+					  <div className="checker"><span><input type="checkbox" name="request_jobs" checked={this.props.data.request_jobs} onChange={this.props.handleRequestedChange} /></span></div> Request information
+					</label>
+				  </div>              
+				</div>				
+				<div className="box-content">
+				  <div className="jobs sortable" data-type="jobs">
+					{ContentJobsNodes}
+				  </div>
+				  <div className="form-actions">
+				  <button className="btn btn-success" onClick={this.props.addJobs}>Add new job</button>
+				  </div>
+				</div>
+			  </div>
+			</div>		
+		);
+	}
+  });
+  
+  var ContentJobsNode = React.createClass({ 	
+	handleChange: function(e) {
+		var add_pdf = React.findDOMNode(this.refs.optionsAddToPdf).checked;
+		var company_name = React.findDOMNode(this.refs.company_name).value;
+		var description = React.findDOMNode(this.refs.description).value;
+		var start_date = React.findDOMNode(this.refs.start_date).value;
+		var end_date = React.findDOMNode(this.refs.end_date).value;
+		var role = React.findDOMNode(this.refs.role).value;
+		var main_t = React.findDOMNode(this.refs.main_t).value;
+		this.props.handleChange({id: this.props.id, company_name: company_name, description: description, start_date: start_date, end_date: end_date, role: role, main_t: main_t, add_pdf: add_pdf});
+		if (e.target.type == "checkbox") this.props.handleFormSubmit(null, true);
+	},
+	
+	handleTinyChange: function(val) {
+		var add_pdf = React.findDOMNode(this.refs.optionsAddToPdf).checked;
+		var company_name = React.findDOMNode(this.refs.company_name).value;
+		var description = val;
+		var start_date = React.findDOMNode(this.refs.start_date).value;
+		var end_date = React.findDOMNode(this.refs.end_date).value;
+		var role = React.findDOMNode(this.refs.role).value;
+		var main_t = React.findDOMNode(this.refs.main_t).value;
+		this.props.handleChange({id: this.props.id, company_name: company_name, description: description, start_date: start_date, end_date: end_date, role: role, main_t: main_t, add_pdf: add_pdf});
+	},
+	
+	
+	delNode: function(e) {
+		var text = tinymce.get("tinymcejob"+this.props.id).getContent();
+		this.handleTinyChange(text);
+		if (text) {
+			if (confirm("Are you sure you want to delete '" + $(text.substring(0,50)).text() + "...'? This can't be undone.") == false){
+				e.preventDefault();
+				return;
+			}
+		}
+		React.findDOMNode(this.refs.well).className="project-box well";
+		this.props.delNode(this.props.id);
+		e.preventDefault();
+	},
+	
+	allowEdit: function(e){
+		React.findDOMNode(this.refs.well).className="project-box well editing";
+		e.preventDefault();
+	},
+	
+	disallowEdit: function(e){
+		React.findDOMNode(this.refs.well).className="project-box well";
+		this.handleTinyChange(tinymce.get("tinymcejob"+this.props.id).getContent());
+		this.props.handleFormSubmit();
+		e.preventDefault();
+	},
+	
+	componentDidMount: function() {
+		var that = this;
+		tinymce.init({
+            selector: "#tinymcejob" + this.props.id,
+			plugins: "autolink link",
+			menubar: false,
+			toolbar: "undo redo | fontsizeselect | bold italic underline strikethrough | alignleft aligncenter alignright | bullist numlist outdent indent | removeformat | link unlink ",
+        });	
+        $('.datepicker').datepicker({dateFormat: 'dd/mm/yy', onSelect: function(date) {
+			that.props.handleDateChange($(this).attr("data-entity"), $(this).attr("data-id"), $(this).attr("data-type"), $(this).val());
+		}});
+	
+		if (typeof this.props.company_name == "undefined") {
+			React.findDOMNode(this.refs.well).className="project-box well editing";
+		}		
+    },
+	
+	componentWillUnmount: function() {
+		tinymce.get("tinymcejob" + this.props.id).remove();		
+	},
+  
+	render: function() {
+		if (this.props.start_date && this.props.end_date) {
+		
+			var pa = this.props.start_date.split("/");
+			var pb = this.props.end_date.split("/");
+			var a = new Date(pa[2], pa[1], pa[0]);
+			var b = new Date(pb[2], pb[1], pb[0]);
+
+			var duration = getNiceTime(b, a, 1, false)
+		
+		}
+	
+		return (		
+			<div className="project-box well" ref="well" data-id={this.props.real_id}>
+                <div className="project-box-header">
+                  <h3><span className="title">{this.props.company_name}</span><input placeholder="Company name" type="text" ref="company_name" className="input" value={this.props.company_name} onChange={this.handleChange} /></h3>
+                  <div className="project-box-date">
+                    <div className="project-box-date_display">
+                      <span className="title">{this.props.start_date} - {this.props.end_date}</span>
+                      <div className="project-box-date-duration">{duration}</div>
+                    </div>
+                    <div className="project-box-date_edit">
+                      <div>
+                        <label className="control-label" for="date01">Start Date</label>
+                        <div className="controls">
+                          <input type="text" data-id={this.props.id} data-entity="jobs" data-type="start_date" className="datepicker" ref="start_date" value={this.props.start_date} onChange={this.handleChange} />
+                        </div>                      
+                      </div>
+                      <div>
+                        <label className="control-label" for="date01">End Date</label>
+                        <div className="controls">
+                          <input type="text" data-id={this.props.id} data-entity="jobs" data-type="end_date" className="datepicker" ref="end_date" value={this.props.end_date} onChange={this.handleChange} />
+                        </div>                      
+                      </div>
+                    </div>
+                  </div>
+                  <div className="clearfix"></div>
+                </div>
+				<textarea rows="4" value={this.props.description} onChange={this.handleChange} ref="description" id={"tinymcejob"+this.props.id}></textarea>
+				<div className="content" dangerouslySetInnerHTML={{__html: this.props.description}}></div>
+                <ul>
+                  <li><strong>Role:</strong> <span className="title">{this.props.role}</span><input ref="role" type="text" className="input" value={this.props.role} onChange={this.handleChange} /></li>
+                  <li><strong>Main tech:</strong> <span className="title">{this.props.main_t}</span><textarea rows="2" ref="main_t" className="input fp-doublewidth" ref="main_t" value={this.props.main_t} onChange={this.handleChange} /></li>
+                </ul>
+                <button className="btn" onClick={this.allowEdit}>Edit</button>
+				<button className="btn btn-primary btn-save" onClick={this.disallowEdit}>Save</button>
+				<a className="btn btn-remove red" href="#" onClick={this.delNode}>
+					<i className="icon-remove"></i>  
+				</a>
+                <div className="control-group">
+                  <div className="controls">
+                    <label className="checkbox inline">
+                      <div classNameName="checker"><span><input ref="optionsAddToPdf" type="checkbox" value={this.props.id} checked={this.props.add_pdf} onChange={this.handleChange} /></span></div> Add to PDF
+                    </label>                                  
+                  </div>
+                </div>
+              </div>
+		);
+	}
+  });
+  
+  var ContentLanguages = React.createClass({		
+	handleChange: function(e){
+		this.props.handleChange(e);
+	},
+	
+	componentDidMount: function() {
+		var that = this;
+		$( ".languages.sortable" ).sortable({ 
+			placeholder: "ui-sortable-placeholder-table",
+			stop: function( event, ui ) {
+				var arr = [];
+				var type = $(ui.item).parents(".sortable").attr("data-type");
+				$(ui.item).parents(".sortable").find("tr").each(function(){
+					arr.push( $(this).attr("data-id") );
+				});
+				that.props.handleReorder(type, arr);
+			},
+			'start': function (event, ui) {
+				ui.placeholder.html("<td colspan='6'></td>")
+			},
+			forcePlaceholderSize: true,
+			axis: "y"  
+		});	
+	},
+	
+	selectAll: function(e) {
+		var checked = 0;
+		for (var i = 0; i < this.props.data.languages_attributes.length; i++)
+			if (this.props.data.languages_attributes[i].add_pdf)
+				checked++;
+		if (checked == this.props.data.languages_attributes.length)
+			this.props.uncheckAll("languages");
+		else
+			this.props.checkAll("languages");
+		e.preventDefault();
+	},
+	
+	render: function() {
+		var that = this;
+		var i = -1;
+		var ContentLanguagesNodes = this.props.data.languages_attributes.map(function(node){
+			i++
+			return (
+				<ContentLanguagesNode id={i} real_id={node.id} language={node.language} level={node.level} add_pdf={node.add_pdf} handleChange={that.handleChange} handleFormSubmit={that.props.handleFormSubmit} delNode={that.props.delLanguages} />
+			);
+		});  	
+		
+		var toggleClass = "icon-check";
+		var checked = 0;
+		
+		for (var i = 0; i < this.props.data.languages_attributes.length; i++)
+			if (this.props.data.languages_attributes[i].add_pdf)
+				checked++;
+		if (checked == this.props.data.languages_attributes.length)
+			toggleClass = "icon-check-empty"	
+		
+		if (this.props.data.languages_attributes.length == 0) {
+			ContentLanguagesNodes = <tr><td>No lanugages found.</td></tr>;
+		}
+		
+		return (		
+			<div className="row">
+			  <div className="box span12 fp-summary">
+				<div className="box-header">
+				  <h2><i className="icon-flag"></i><span className="break"></span>Languages</h2>
+				  <div className="box-icon">
+					<a className="" onClick={this.selectAll} href="#"><i className={toggleClass}></i> Toggle all</a>
+					<label className="checkbox inline">
+					  <div className="checker"><span><input type="checkbox" name="request_languages" checked={this.props.data.request_languages} onChange={this.props.handleRequestedChange} /></span></div> Request information
+					</label>
+				  </div>              
+				</div>
+				<div className="box-content">
+				 <table className="table table-striped table-bordered align-mid last-col-small table-editable">
+				  <tbody className="languages sortable" data-type="languages">
+					{ContentLanguagesNodes}
+				  </tbody>
+				  </table>                  
+				  <div className="form-actions">
+				  <button className="btn btn-success" onClick={this.props.addLanguages}>Add new language</button>
+				  </div>
+				</div>
+			  </div>
+			</div>		
+		);
+	}
+  });
+  
+  var ContentLanguagesNode = React.createClass({ 	
+	handleChange: function(e) {
+		var add_pdf = React.findDOMNode(this.refs.optionsAddToPdf).checked;
+		var language = React.findDOMNode(this.refs.language).value;
+		var level = React.findDOMNode(this.refs.level).value;
+		this.props.handleChange({id: this.props.id, language: language, level: level, add_pdf: add_pdf});
+		if (e.target.type == "checkbox") this.props.handleFormSubmit(null, true);
+	},
+	
+	delNode: function(e) {
+		if (this.props.language)
+			if (confirm("Are you sure you want to delete " + this.props.language + "? This can't be undone.") == false)
+				return;
+		React.findDOMNode(this.refs.well).className="";
+		this.props.delNode(this.props.id);
+		e.preventDefault();
+	},
+	
+	allowEdit: function(e){
+		React.findDOMNode(this.refs.well).className="editing";
+		e.preventDefault();
+	},
+	
+	disallowEdit: function(e){
+		React.findDOMNode(this.refs.well).className="";
+		this.props.handleFormSubmit();
+		e.preventDefault();
+	},
+	
+	componentDidMount: function() {
+		if (typeof this.props.language == "undefined") {
+			this.allowEdit();
+		}
+	},
+  
+	render: function() {
+		return (
+			<tr className="" ref="well" data-id={this.props.real_id}>
+				<td><span className="title">{this.props.language}</span><input placeholder="Language" ref="language" className="input" type="text" value={this.props.language} onChange={this.handleChange} /></td>
+				<td>
+					<span className="title">{this.props.level}</span>
+					<div className="controls">
+                      <select ref="level" value={this.props.level} onChange={this.handleChange}>
+						  <option value="Basic user">Basic user</option>
+						  <option value="Independent user">Independent user</option>
+						  <option value="Proficient user">Proficient user</option>
+                      </select>
+                    </div>
+				</td>
+				<td>
+					<label className="checkbox inline">
+					  <div className="checker"><span><input ref="optionsAddToPdf" type="checkbox" value={this.props.id} checked={this.props.add_pdf} onChange={this.handleChange} /></span></div> Add to PDF
+					</label>         					
+				</td>
+				<td>
+					<a className="btn btn-info" href="#" onClick={this.allowEdit}>
+					  <i className="icon-pencil"></i>  
+					</a>
+					<a className="btn btn-success btn-save" href="#" onClick={this.disallowEdit}>
+					  <i className="icon-save"></i>  
+					</a>
+					<a className="btn btn-remove red" href="#" onClick={this.delNode}>
+					  <i className="icon-remove"></i>  
+					</a>
+				</td>
+			</tr>	
+		);
+	}
+  });
+	  
+	/**
+	 * Function to print date diffs.
+	 * 
+	 * @param {Date} fromDate: The valid start date
+	 * @param {Date} toDate: The end date. Can be null (if so the function uses "now").
+	 * @param {Number} levels: The number of details you want to get out (1="in 2 Months",2="in 2 Months, 20 Days",...)
+	 * @param {Boolean} prefix: adds "in" or "ago" to the return string
+	 * @return {String} Diffrence between the two dates.
+	 */
+	function getNiceTime(fromDate, toDate, levels, prefix) {
+		var lang = {
+				"date.past": "{0} ago",
+				"date.future": "in {0}",
+				"date.now": "now",
+				"date.year": "{0} year",
+				"date.years": "{0} years",
+				"date.years.prefixed": "{0} years",
+				"date.month": "{0} month",
+				"date.months": "{0} months",
+				"date.months.prefixed": "{0} months",
+				"date.day": "{0} day",
+				"date.days": "{0} days",
+				"date.days.prefixed": "{0} days",
+				"date.hour": "{0} hour",
+				"date.hours": "{0} hours",
+				"date.hours.prefixed": "{0} hours",
+				"date.minute": "{0} minute",
+				"date.minutes": "{0} minutes",
+				"date.minutes.prefixed": "{0} minutes",
+				"date.second": "{0} second",
+				"date.seconds": "{0} seconds",
+				"date.seconds.prefixed": "{0} seconds",
+			},
+			langFn = function(id,params){
+				var returnValue = lang[id] || "";
+				if(params){
+					for(var i=0;i<params.length;i++){
+						returnValue = returnValue.replace("{"+i+"}",params[i]);
+					}
+				}
+				return returnValue;
+			},
+			toDate = toDate ? toDate : new Date(),
+			diff = fromDate - toDate,
+			past = diff < 0 ? true : false,
+			diff = diff < 0 ? diff * -1 : diff,
+			date = new Date(new Date(1970,0,1,0).getTime()+diff),
+			returnString = '',
+			count = 0,
+			years = (date.getFullYear() - 1970);
+		if(years > 0){
+			var langSingle = "date.year" + (prefix ? "" : ""),
+				langMultiple = "date.years" + (prefix ? ".prefixed" : "");
+			returnString += (count > 0 ?  ', ' : '') + (years > 1 ? langFn(langMultiple,[years]) : langFn(langSingle,[years]));
+			count ++;
+		}
+		var months = date.getMonth();
+		if(count < levels && months > 0){
+			var langSingle = "date.month" + (prefix ? "" : ""),
+				langMultiple = "date.months" + (prefix ? ".prefixed" : "");
+			returnString += (count > 0 ?  ', ' : '') + (months > 1 ? langFn(langMultiple,[months]) : langFn(langSingle,[months]));
+			count ++;
+		} else {
+			if(count > 0)
+				count = 99;
+		}
+		var days = date.getDate() - 1;
+		if(count < levels && days > 0){
+			var langSingle = "date.day" + (prefix ? "" : ""),
+				langMultiple = "date.days" + (prefix ? ".prefixed" : "");
+			returnString += (count > 0 ?  ', ' : '') + (days > 1 ? langFn(langMultiple,[days]) : langFn(langSingle,[days]));
+			count ++;
+		} else {
+			if(count > 0)
+				count = 99;
+		}
+		var hours = date.getHours();
+		if(count < levels && hours > 0){
+			var langSingle = "date.hour" + (prefix ? "" : ""),
+				langMultiple = "date.hours" + (prefix ? ".prefixed" : "");
+			returnString += (count > 0 ?  ', ' : '') + (hours > 1 ? langFn(langMultiple,[hours]) : langFn(langSingle,[hours]));
+			count ++;
+		} else {
+			if(count > 0)
+				count = 99;
+		}
+		var minutes = date.getMinutes();
+		if(count < levels && minutes > 0){
+			var langSingle = "date.minute" + (prefix ? "" : ""),
+				langMultiple = "date.minutes" + (prefix ? ".prefixed" : "");
+			returnString += (count > 0 ?  ', ' : '') + (minutes > 1 ? langFn(langMultiple,[minutes]) : langFn(langSingle,[minutes]));
+			count ++;
+		} else {
+			if(count > 0)
+				count = 99;
+		}
+		var seconds = date.getSeconds();
+		if(count < levels && seconds > 0){
+			var langSingle = "date.second" + (prefix ? "" : ""),
+				langMultiple = "date.seconds" + (prefix ? ".prefixed" : "");
+			returnString += (count > 0 ?  ', ' : '') + (seconds > 1 ? langFn(langMultiple,[seconds]) : langFn(langSingle,[seconds]));
+			count ++;
+		} else {
+			if(count > 0)
+				count = 99;
+		}
+		if(prefix){
+			if(returnString == ""){
+				returnString = langFn("date.now");
+			} else if(past)
+				returnString = langFn("date.past",[returnString]);
+			else
+				returnString = langFn("date.future",[returnString]);
+		}
+		return returnString;
+}
+
+	isEmpty = function(x) {
+		if(x!=null){ 
+			return true;
+		}else{ 
+			return false
+		} 
+	}
+  
+  React.render(
+	<User url="/users/<%= @user.id%>.json" />,
+    document.getElementById('reactContent')
+  );
+</script> 

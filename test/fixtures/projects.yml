@@ -1,0 +1,29 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  start_date: 2015-09-04
+  end_date: 2015-09-04
+  name: MyString
+  description: MyText
+  client: MyString
+  hours: 1
+  goal: MyString
+  role: MyString
+  main_t: MyString
+  specific_t: MyString
+  business_domain: MyString
+  user_id: 1
+
+two:
+  start_date: 2015-09-04
+  end_date: 2015-09-04
+  name: MyString
+  description: MyText
+  client: MyString
+  hours: 1
+  goal: MyString
+  role: MyString
+  main_t: MyString
+  specific_t: MyString
+  business_domain: MyString
+  user_id: 1

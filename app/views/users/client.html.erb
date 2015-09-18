@@ -1,0 +1,963 @@
+<div id="reactContent"></div>
+  
+  
+ 
+  
+<script type="text/jsx">
+  var User = React.createClass({
+	getInitialState: function() {   
+      return {data: {
+		
+	  }};    
+    },
+    
+    componentDidMount: function() {   
+		$.ajax({
+			url: this.props.url,
+			dataType: 'json',
+			cache: false,
+			success: function(data) {
+			  this.setState({data: data});
+			}.bind(this),
+			error: function(xhr, status, err) {
+			  console.error(this.props.url, status, err.toString());
+			}.bind(this)
+		});	  
+		$('.btn-modal-popup').click(function(e){
+			e.preventDefault();
+			$($(this).attr("href")).modal('show');
+		});	  
+    },
+	
+	handleFormSubmit: function(e, silent, saved) {	
+		if (saved == undefined) saved = false;
+		$.ajax({
+			url: "/client_update/",
+			dataType: "html",
+			data: {"user": this.state.data, "saved": saved, "authenticity_token": "<%= form_authenticity_token %>", "utf8": "✓"},
+			method: "PUT",
+			cache:false,
+			success: function(data) {
+				window.location="/user_thanks";
+			}.bind(this),
+			error: function(xhr, status, err) {
+				$.gritter.add({
+					image: '/img/icon-err.png',
+					title: 'Error',
+					text: 'Oops, there was an error. Please, try again. This may help: ' +  err.toString()
+				});					
+			  console.error(this.props.url, status, err.toString());
+			}.bind(this)		
+		});
+	},
+	
+	handleFormSubmitFinal: function(e) {
+		e.preventDefault();
+		this.handleFormSubmit(e, false, true);
+	},
+	
+	handleGeneralChange: function(e) {
+		var attr = e.target.name;
+		var val = e.target.value;
+		var data = this.state.data;
+		data[attr] = val;
+		this.setState({data: data});
+	},
+	
+	handleSummaryChange: function(e) {
+		var data = this.state.data;
+		for (var i = 0; i < data.sums_attributes.length; i++) {
+			data.sums_attributes[i].add_pdf = null;
+		}
+		data.sums_attributes[e.id].text = e.text;
+		data.sums_attributes[e.id].add_pdf = true;
+		this.setState({data: data});
+	},
+	
+	handleSkillsChange: function(e) {
+		var data = this.state.data;
+		data.skills_attributes[e.id].skill_name = e.skill_name;
+		data.skills_attributes[e.id].years = e.years;
+		data.skills_attributes[e.id].months = e.months;
+		data.skills_attributes[e.id].add_pdf = e.add_pdf;
+		this.setState({data: data});
+	},
+	
+	handleTechesChange: function(e) {
+		var data = this.state.data;
+		data.teches_attributes[e.id].technology_name = e.technology_name;
+		data.teches_attributes[e.id].years = e.years;
+		data.teches_attributes[e.id].months = e.months;
+		data.teches_attributes[e.id].add_pdf = e.add_pdf;
+		this.setState({data: data});
+	},
+	
+	handleProjectsChange: function(e) {
+		var data = this.state.data;
+		data.projects_attributes[e.id].name = e.name;
+		data.projects_attributes[e.id].add_pdf = e.add_pdf;
+		data.projects_attributes[e.id].description = e.description;
+		data.projects_attributes[e.id].client = e.client;
+		data.projects_attributes[e.id].hours = e.hours;
+		data.projects_attributes[e.id].goal = e.goal;
+		data.projects_attributes[e.id].role = e.role;
+		data.projects_attributes[e.id].main_t = e.main_t;
+		data.projects_attributes[e.id].specific_t = e.specific_t;
+		data.projects_attributes[e.id].business_domain = e.business_domain;
+		this.setState({data: data});
+	},
+	
+	handleJobsChange: function(e) {
+		var data = this.state.data;
+		data.jobs_attributes[e.id].company_name = e.company_name;
+		data.jobs_attributes[e.id].add_pdf = e.add_pdf;
+		data.jobs_attributes[e.id].description = e.description;
+		data.jobs_attributes[e.id].role = e.role;
+		data.jobs_attributes[e.id].main_t = e.main_t;
+		this.setState({data: data});
+	},
+	
+	handleLanguagesChange: function(e) {
+		var data = this.state.data;
+		data.languages_attributes[e.id].language = e.language;
+		data.languages_attributes[e.id].level = e.level;
+		data.languages_attributes[e.id].add_pdf = e.add_pdf;
+		this.setState({data: data});
+	},
+	
+	handleDateChange: function(entity, id, type, val) {		
+		var data = this.state.data;
+		if (entity == "jobs") 
+			data.jobs_attributes[id][type] = val;
+		else	
+			data.projects_attributes[id][type] = val;
+		this.setState({data: data});
+	},
+	
+	delSkills: function(id) {
+		data=this.state.data;
+		data.skills_attributes[id]._destroy = true;
+		this.setState({data: data});
+	},
+	
+	delTeches: function(id) {
+		data=this.state.data;
+		data.teches_attributes[id]._destroy = true;
+		this.setState({data: data});
+	},
+	
+	delProjects: function(id) {
+		data=this.state.data;
+		data.projects_attributes[id]._destroy = true;
+		this.setState({data: data});
+	},
+	
+	delJobs: function(id) {
+		data=this.state.data;
+		data.jobs_attributes[id]._destroy = true;
+		this.setState({data: data});
+	},
+	
+	delLanguages: function(id) {
+		data=this.state.data;
+		data.languages_attributes[id]._destroy = true;
+		this.setState({data: data});
+	},
+	
+	addSummary: function() {
+		var data = this.state.data;
+		data.sums_attributes.push({});
+		this.setState({data: data});
+	},	
+	
+	addSkills: function() {
+		var data = this.state.data;
+		data.skills_attributes.push({});
+		this.setState({data: data});
+	},	
+	
+	addTeches: function() {
+		var data = this.state.data;
+		data.teches_attributes.push({});
+		this.setState({data: data});
+	},	
+	
+	addProjects: function() {
+		var data = this.state.data;
+		data.projects_attributes.push({});
+		this.setState({data: data});
+	},	
+	
+	addJobs: function() {
+		var data = this.state.data;
+		data.jobs_attributes.push({});
+		this.setState({data: data});
+	},	
+	
+	addLanguages: function() {
+		var data = this.state.data;
+		data.languages_attributes.push({});
+		this.setState({data: data});
+	},	
+	
+	componentDidUpdate: function() {
+		$("input:checkbox, input:radio, input:file").not('[data-no-uniform="true"],#uniform-is-ajax').uniform(); 
+	},
+	
+	render: function() {
+		var skills = ""
+		if (typeof this.state.data.skills_attributes !== "undefined") 
+			skills = <ContentSkills handleChange={this.handleSkillsChange} handleRequestedChange={this.handleRequestedChange} handleFormSubmit={this.handleFormSubmit} data={this.state.data} addSkills={this.addSkills} delSkills={this.delSkills} />;
+		
+		var teches = ""
+		if (typeof this.state.data.teches_attributes !== "undefined") 
+			teches = <ContentTeches handleChange={this.handleTechesChange} handleRequestedChange={this.handleRequestedChange} handleFormSubmit={this.handleFormSubmit} data={this.state.data} addTeches={this.addTeches} delTeches={this.delTeches} />
+
+		
+		var projects = ""
+		if (typeof this.state.data.projects_attributes !== "undefined") 
+			projects = 	<ContentProjects handleChange={this.handleProjectsChange} handleRequestedChange={this.handleRequestedChange} handleFormSubmit={this.handleFormSubmit} data={this.state.data} addProjects={this.addProjects} handleDateChange={this.handleDateChange} delProjects={this.delProjects} />
+		
+		var jobs = ""
+		if (typeof this.state.data.jobs_attributes !== "undefined") 
+			jobs = <ContentJobs handleChange={this.handleJobsChange} handleRequestedChange={this.handleRequestedChange} handleFormSubmit={this.handleFormSubmit} data={this.state.data} addJobs={this.addJobs} handleDateChange={this.handleDateChange} delJobs={this.delJobs} />
+		
+		var languages = ""
+		if (typeof this.state.data.languages_attributes !== "undefined") 
+			languages = <ContentLanguages handleChange={this.handleLanguagesChange} handleRequestedChange={this.handleRequestedChange} handleFormSubmit={this.handleFormSubmit} data={this.state.data} addLanguages={this.addLanguages} delLanguages={this.delLanguages} />
+		
+	
+		return (
+		  <div>
+			<div id="content" className="span12">
+
+				<div className="container">
+					<div className="row greeting">
+					  <div className="span12">
+							<h2>Hello {this.state.data.name}!</h2>
+							{this.state.data.greeting}
+					  </div>
+					</div>	
+					
+					{skills}
+					{teches}
+					{projects}
+					{jobs}
+					{languages}
+					{this.props.children}
+				</div>
+			</div>
+			<div className="form-end container">
+				<a href="#areyousure" className="btn btn-primary input-xlarge btn-modal-popup"><i className="icon-save"></i> Save and Send</a>  
+			</div>
+
+			<div className="clearfix"></div>
+			<Popup send={this.handleFormSubmitFinal} />
+		  </div>
+		);
+	}
+  });
+  
+  var ContentSkills = React.createClass({		
+	handleChange: function(e){
+		this.props.handleChange(e);
+	},
+	
+	render: function() {
+		var that = this;
+		var i = -1;
+		var ContentSkillsNodes = this.props.data.skills_attributes.map(function(node){
+			i++
+			if (node._destroy) return;
+			return (
+				<ContentSkillsNode id={i} skill_name={node.skill_name} years={node.years} months={node.months} add_pdf={node.add_pdf} handleChange={that.handleChange} handleFormSubmit={that.props.handleFormSubmit} delNode={that.props.delSkills} />
+			);
+		});  		
+		return (		
+			<div className="row">
+			  <div className="box span12 fp-summary">
+				<div className="box-header">
+				  <h2><i className="icon-key"></i><span className="break"></span>Key skills</h2>
+				</div>
+				<div className="box-content">
+				 <table className="table table-striped table-bordered align-mid last-col-small table-editable">
+				  <tbody>
+					{ContentSkillsNodes}
+				  </tbody>
+				  </table>                  
+				  <div className="form-actions">
+				  <button className="btn btn-success" onClick={this.props.addSkills}>Add new key skill</button>
+				  </div>
+				</div>
+			  </div>
+			</div>		
+		);
+	}
+  });
+  
+  var ContentSkillsNode = React.createClass({ 	
+	handleChange: function(e) {
+		var years = React.findDOMNode(this.refs.years).value;
+		var months = React.findDOMNode(this.refs.months).value;
+		var skill_name = React.findDOMNode(this.refs.skill_name).value;
+		this.props.handleChange({id: this.props.id, skill_name: skill_name, years: years, months: months});
+		
+		if ( (isNaN(parseInt(years, 10))) || (parseInt(years,10) < 0) ) 
+			React.findDOMNode(this.refs.years).className="input fp-autowidth red";
+		else
+			React.findDOMNode(this.refs.years).className="input fp-autowidth";
+			
+		if ( ( isNaN(parseInt(months, 10)) ) || (parseInt(months,10) > 11) || (parseInt(months,10) < 0) )
+			React.findDOMNode(this.refs.months).className="input fp-autowidth red";
+		else
+			React.findDOMNode(this.refs.months).className="input fp-autowidth";
+		
+	},
+	
+	handleFormSubmit: function(e) {
+		e.preventDefault();
+		this.props.handleFormSubmit();
+	},
+	
+	delNode: function(e) {
+		this.props.delNode(this.props.id);
+		e.preventDefault();
+	},
+  
+	render: function() {
+	
+		return (
+			<tr className="editing" ref="well">
+				<td><span className="title">{this.props.skill_name}</span><input placeholder="Skill" ref="skill_name" className="input" type="text" value={this.props.skill_name} onChange={this.handleChange} /></td>
+				<td><span className="title">{this.props.years} years</span><input ref="years" size="1" className="input fp-autowidth" type="text" value={this.props.years} onChange={this.handleChange} /><span className="llabel"> years</span></td>
+				<td><span className="title">{this.props.months} months</span><input ref="months" size="1" className="input fp-autowidth" type="text" value={this.props.months} onChange={this.handleChange} /><span className="llabel"> months</span></td>
+				<td>
+					<a className="btn btn-remove red" href="#" onClick={this.delNode}>
+					  <i className="icon-remove"></i>  
+					</a>
+				</td>
+			</tr>	
+		);
+	}
+  });
+  
+  var ContentTeches = React.createClass({		
+	handleChange: function(e){
+		this.props.handleChange(e);
+	},
+	
+	render: function() {
+		var that = this;
+		var i = -1;
+		var ContentTechNodes = this.props.data.teches_attributes.map(function(node){
+			i++
+			if (node._destroy) return;
+			return (
+				<ContentTechesNode id={i} technology_name={node.technology_name} years={node.years} months={node.months} add_pdf={node.add_pdf} handleChange={that.handleChange} handleFormSubmit={that.props.handleFormSubmit} delNode={that.props.delTeches} />
+			);
+		});  		
+		return (		
+			<div className="row">
+			  <div className="box span12 fp-summary">
+				<div className="box-header">
+				  <h2><i className="icon-cogs"></i><span className="break"></span>Technologies</h2>
+				</div>
+				<div className="box-content">
+				 <table className="table table-striped table-bordered align-mid last-col-small table-editable">
+				  <tbody>
+					{ContentTechNodes}
+				  </tbody>
+				 </table>                  
+				  <div className="form-actions">
+					<button className="btn btn-success" onClick={this.props.addTeches}>Add new tech</button>
+				  </div>
+				</div>
+			  </div>
+			</div>		
+		);
+	}
+  });
+  
+  var ContentTechesNode = React.createClass({ 	
+	handleChange: function(e) {
+		var years = React.findDOMNode(this.refs.years).value;
+		var months = React.findDOMNode(this.refs.months).value;
+		var technology_name = React.findDOMNode(this.refs.technology_name).value;
+		this.props.handleChange({id: this.props.id, technology_name: technology_name, years: years, months: months});
+		
+		if ( (isNaN(parseInt(years, 10))) || (parseInt(years,10) < 0) ) 
+			React.findDOMNode(this.refs.years).className="input fp-autowidth red";
+		else
+			React.findDOMNode(this.refs.years).className="input fp-autowidth";
+			
+		if ( ( isNaN(parseInt(months, 10)) ) || (parseInt(months,10) > 12) || (parseInt(months,10) < 0) )
+			React.findDOMNode(this.refs.months).className="input fp-autowidth red";
+		else
+			React.findDOMNode(this.refs.months).className="input fp-autowidth";
+	},
+	
+	delNode: function(e) {
+		this.props.delNode(this.props.id);
+		e.preventDefault();
+	},
+	
+	handleFormSubmit: function(e) {
+		e.preventDefault();
+		this.props.handleFormSubmit();
+	},
+  
+	render: function() {
+		return (
+			<tr className="editing" ref="well">
+				<td><span className="title">{this.props.technology_name}</span><input placeholder="Technology" ref="technology_name" className="input" type="text" value={this.props.technology_name} onChange={this.handleChange} /></td>
+				<td><span className="title">{this.props.years} years</span><input ref="years" size="1" className="input fp-autowidth" type="text" value={this.props.years} onChange={this.handleChange} /><span className="llabel"> years</span></td>
+				<td><span className="title">{this.props.months} months</span><input ref="months" size="1" className="input fp-autowidth" type="text" value={this.props.months} onChange={this.handleChange} /><span className="llabel"> months</span></td>
+				<td>
+					<a className="btn btn-remove red" href="#" onClick={this.delNode}>
+					  <i className="icon-remove"></i>  
+					</a>					
+				</td>
+			</tr>	
+		);
+	}
+  });
+  
+  var ContentProjects = React.createClass({		
+	handleChange: function(e){
+		this.props.handleChange(e);
+	},
+	
+	render: function() {
+		var that = this;
+		var i = -1;
+		var ContentProjectsNodes = this.props.data.projects_attributes.map(function(node, k){
+			i++
+			if (node._destroy) return;
+			return (
+				<ContentProjectsNode key={k} id={i} business_domain={node.business_domain} client={node.client} description={node.description} start_date={node.start_date} end_date={node.end_date} goal={node.goal} hours={node.hours} main_t={node.main_t} specific_t={node.specific_t} name={node.name} role={node.role} handleChange={that.handleChange} handleFormSubmit={that.props.handleFormSubmit} handleDateChange={that.props.handleDateChange} delNode={that.props.delProjects} />
+			);
+		});  		
+		return (		
+			<div className="row">
+			  <div className="box span12 fp-summary">
+				<div className="box-header">
+				  <h2><i className="icon-briefcase"></i><span className="break"></span>Projects</h2>              
+				</div>				
+				<div className="box-content">
+					{ContentProjectsNodes}
+				  <div className="form-actions">
+				  <button className="btn btn-success" onClick={this.props.addProjects}>Add new project</button>
+				  </div>
+				</div>
+			  </div>
+			</div>		
+		);
+	}
+  });
+  
+  var ContentProjectsNode = React.createClass({ 	
+	handleChange: function(e) {
+		var name = React.findDOMNode(this.refs.name).value;
+		var description = React.findDOMNode(this.refs.description).value;
+		var start_date = React.findDOMNode(this.refs.start_date).value;
+		var end_date = React.findDOMNode(this.refs.end_date).value;
+		var client = React.findDOMNode(this.refs.client).value;
+		var hours = React.findDOMNode(this.refs.hours).value;
+		var goal = React.findDOMNode(this.refs.goal).value;
+		var role = React.findDOMNode(this.refs.role).value;
+		var main_t = React.findDOMNode(this.refs.main_t).value;
+		var specific_t = React.findDOMNode(this.refs.specific_t).value;
+		var business_domain = React.findDOMNode(this.refs.business_domain).value;
+		this.props.handleChange({id: this.props.id, name: name, hours: hours, description: description, start_date: start_date, end_date: end_date, client: client, goal: goal, role: role, business_domain: business_domain, main_t: main_t, specific_t: specific_t});
+	},
+	
+	handleTinyChange: function(val) {
+		var name = React.findDOMNode(this.refs.name).value;
+		var description = val;
+		var start_date = React.findDOMNode(this.refs.start_date).value;
+		var end_date = React.findDOMNode(this.refs.end_date).value;
+		var client = React.findDOMNode(this.refs.client).value;
+		var hours = React.findDOMNode(this.refs.hours).value;
+		var goal = React.findDOMNode(this.refs.goal).value;
+		var role = React.findDOMNode(this.refs.role).value;
+		var main_t = React.findDOMNode(this.refs.main_t).value;
+		var specific_t = React.findDOMNode(this.refs.specific_t).value;
+		var business_domain = React.findDOMNode(this.refs.business_domain).value;
+		this.props.handleChange({id: this.props.id, name: name, hours: hours, description: description, start_date: start_date, end_date: end_date, client: client, goal: goal, role: role, business_domain: business_domain, main_t: main_t, specific_t: specific_t});
+	},
+	
+	delNode: function(e) {
+		var text = tinymce.get("tinymceproj"+this.props.id).getContent();
+		this.handleTinyChange(text);
+		if (text) {
+			if (confirm("Are you sure you want to delete '" + $(text.substring(0,50)).text() + "...'? This can't be undone.") == false){
+				e.preventDefault();
+				return;
+			}
+		}
+		React.findDOMNode(this.refs.well).className="project-box well";
+		this.props.delNode(this.props.id);
+		e.preventDefault();
+	},
+	
+	handleFormSubmit: function(e) {
+		e.preventDefault();
+		this.props.handleFormSubmit();
+	},
+	
+	componentDidMount: function() {
+		var that = this;
+		tinymce.init({
+            selector: "#tinymceproj" + this.props.id,
+			plugins: "autolink link",
+			menubar: false,
+			toolbar: "undo redo | fontsizeselect | bold italic underline strikethrough | alignleft aligncenter alignright | bullist numlist outdent indent | removeformat | link unlink ",
+			setup: function (editor) {
+				editor.on('keyup', function (e) {  
+					that.handleTinyChange(editor.getContent());
+				});
+			}
+        });	
+        $('.datepicker').datepicker({dateFormat: 'dd/mm/yy', onSelect: function(date) {
+			that.props.handleDateChange($(this).attr("data-entity"), $(this).attr("data-id"), $(this).attr("data-type"), $(this).val());
+		}});
+    },
+  
+	render: function() {
+		if (this.props.start_date && this.props.end_date) {
+		
+			var pa = this.props.start_date.split("/");
+			var pb = this.props.end_date.split("/");
+			var a = new Date(pa[2], pa[1], pa[0]);
+			var b = new Date(pb[2], pb[1], pb[0]);
+
+			var duration = getNiceTime(b, a, 1, false)
+		
+		}
+	
+		return (		
+			<div className="project-box well editing" ref="well">
+                <div className="project-box-header">
+                  <h3><span className="title">{this.props.name}</span><input placeholder="Project name" type="text" ref="name" className="input" value={this.props.name} onChange={this.handleChange} /></h3>
+                  <div className="project-box-date">
+                    <div className="project-box-date_display">
+                      <span className="title">{this.props.start_date} - {this.props.end_date}</span>
+                      <div className="project-box-date-duration">{duration}</div>
+                    </div>
+                    <div className="project-box-date_edit">
+                      <div>
+                        <label className="control-label" for="date01">Start Date</label>
+                        <div className="controls">
+                          <input type="text" data-id={this.props.id} data-entity="projects" data-type="start_date" className="datepicker" ref="start_date" value={this.props.start_date} onChange={this.handleChange} />
+                        </div>                      
+                      </div>
+                      <div>
+                        <label className="control-label" for="date01">End Date</label>
+                        <div className="controls">
+                          <input type="text" data-id={this.props.id} data-entity="projects" data-type="end_date" className="datepicker" ref="end_date" value={this.props.end_date} onChange={this.handleChange} />
+                        </div>                      
+                      </div>
+                    </div>
+                  </div>
+                  <div className="clearfix"></div>
+                </div>
+				<textarea rows="4" value={this.props.description} onChange={this.handleChange} ref="description" id={"tinymceproj"+this.props.id}></textarea>
+				<div className="content" dangerouslySetInnerHTML={{__html: this.props.description}}></div>
+                <ul>
+                  <li><strong>Client:</strong> <span className="title">{this.props.client}</span><input ref="client" type="text" className="input" value={this.props.client} onChange={this.handleChange} /></li>
+                  <li><strong>Hours:</strong> <span className="title">{this.props.hours}</span><input ref="hours" type="text" className="input" value={this.props.hours} onChange={this.handleChange} /></li>
+                  <li><strong>Goal:</strong> <span className="title">{this.props.goal}</span><input ref="goal" type="text" className="input" value={this.props.goal} onChange={this.handleChange} /></li>
+                  <li><strong>Role:</strong> <span className="title">{this.props.role}</span><input ref="role" type="text" className="input" value={this.props.role} onChange={this.handleChange} /></li>
+                  <li><strong>Main tech:</strong> <span className="title">{this.props.main_t}</span><textarea rows="2" ref="main_t" className="input fp-doublewidth" value={this.props.main_t} onChange={this.handleChange} /></li>
+                  <li><strong>Specific tech:</strong> <span className="title">{this.props.specific_t}</span><textarea rows="2" ref="specific_t" className="input fp-doublewidth" value={this.props.specific_t} onChange={this.handleChange} /></li>
+                  <li><strong>Business domain:</strong> <span className="title">{this.props.business_domain}</span><input ref="business_domain" type="text" className="input" value={this.props.business_domain} onChange={this.handleChange} /></li>
+                </ul>
+				<a className="btn btn-remove red" href="#" onClick={this.delNode}>
+				  <i className="icon-remove"></i>  
+				</a>
+              </div>
+		);
+	}
+  });
+  
+  var ContentJobs = React.createClass({		
+	handleChange: function(e){
+		this.props.handleChange(e);
+	},
+	
+	render: function() {
+		var that = this;
+		var i = -1;
+		var ContentJobsNodes = this.props.data.jobs_attributes.map(function(node, k){
+			i++
+			if (node._destroy) return;
+			return (
+				<ContentJobsNode key={k} id={i} description={node.description} start_date={node.start_date} end_date={node.end_date} main_t={node.main_t} company_name={node.company_name} role={node.role} handleChange={that.handleChange} handleFormSubmit={that.props.handleFormSubmit} handleDateChange={that.props.handleDateChange} delNode={that.props.delJobs} />
+			);
+		});  		
+		return (		
+			<div className="row">
+			  <div className="box span12 fp-summary">
+				<div className="box-header">
+				  <h2><i className="icon-building"></i><span className="break"></span>Employment</h2>
+				</div>              
+				<div className="box-content">
+					{ContentJobsNodes}
+				  <div className="form-actions">
+				  <button className="btn btn-success" onClick={this.props.addJobs}>Add new job</button>
+				  </div>
+				</div>
+			  </div>	
+			</div>
+		);
+	}
+  });
+  
+  var ContentJobsNode = React.createClass({ 	
+	handleChange: function(e) {
+		var company_name = React.findDOMNode(this.refs.company_name).value;
+		var description = React.findDOMNode(this.refs.description).value;
+		var start_date = React.findDOMNode(this.refs.start_date).value;
+		var end_date = React.findDOMNode(this.refs.end_date).value;
+		var role = React.findDOMNode(this.refs.role).value;
+		var main_t = React.findDOMNode(this.refs.main_t).value;
+		this.props.handleChange({id: this.props.id, company_name: company_name, description: description, start_date: start_date, end_date: end_date, role: role, main_t: main_t});
+	},
+	
+	handleTinyChange: function(val) {
+		var company_name = React.findDOMNode(this.refs.company_name).value;
+		var description = val;
+		var start_date = React.findDOMNode(this.refs.start_date).value;
+		var end_date = React.findDOMNode(this.refs.end_date).value;
+		var role = React.findDOMNode(this.refs.role).value;
+		var main_t = React.findDOMNode(this.refs.main_t).value;
+		this.props.handleChange({id: this.props.id, company_name: company_name, description: description, start_date: start_date, end_date: end_date, role: role, main_t: main_t});
+	},
+	
+	delNode: function(e) {
+		var text = tinymce.get("tinymcejob"+this.props.id).getContent();
+		this.handleTinyChange(text);
+		if (text) {
+			if (confirm("Are you sure you want to delete '" + $(text.substring(0,50)).text() + "...'? This can't be undone.") == false){
+				e.preventDefault();
+				return;
+			}
+		}
+		React.findDOMNode(this.refs.well).className="project-box well";
+		this.props.delNode(this.props.id);
+		e.preventDefault();
+	},
+	
+	handleFormSubmit: function(e) {
+		e.preventDefault();
+		this.props.handleFormSubmit();
+	},
+	
+	componentDidMount: function() {
+		var that = this;
+		tinymce.init({
+            selector: "#tinymcejob" + this.props.id,
+			plugins: "autolink link",
+			menubar: false,
+			toolbar: "undo redo | fontsizeselect | bold italic underline strikethrough | alignleft aligncenter alignright | bullist numlist outdent indent | removeformat | link unlink ",
+			setup: function (editor) {
+				editor.on('keyup', function (e) {  
+					that.handleTinyChange(editor.getContent());
+				});
+			}
+        });	
+        $('.datepicker').datepicker({dateFormat: 'dd/mm/yy', onSelect: function(date) {
+			that.props.handleDateChange($(this).attr("data-entity"), $(this).attr("data-id"), $(this).attr("data-type"), $(this).val());
+		}});
+    },
+  
+	render: function() {
+		if (this.props.start_date && this.props.end_date) {
+		
+			var pa = this.props.start_date.split("/");
+			var pb = this.props.end_date.split("/");
+			var a = new Date(pa[2], pa[1], pa[0]);
+			var b = new Date(pb[2], pb[1], pb[0]);
+
+			var duration = getNiceTime(b, a, 1, false)
+		
+		}
+	
+		return (		
+			<div className="project-box well editing" ref="well">
+                <div className="project-box-header">
+                  <h3><span className="title">{this.props.company_name}</span><input placeholder="Company name" type="text" ref="company_name" className="input" value={this.props.company_name} onChange={this.handleChange} /></h3>
+                  <div className="project-box-date">
+                    <div className="project-box-date_display">
+                      <span className="title">{this.props.start_date} - {this.props.end_date}</span>
+                      <div className="project-box-date-duration">{duration}</div>
+                    </div>
+                    <div className="project-box-date_edit">
+                      <div>
+                        <label className="control-label" for="date01">Start Date</label>
+                        <div className="controls">
+                          <input type="text" data-id={this.props.id} data-entity="jobs" data-type="start_date" className="datepicker" ref="start_date" value={this.props.start_date} onChange={this.handleChange} />
+                        </div>                      
+                      </div>
+                      <div>
+                        <label className="control-label" for="date01">End Date</label>
+                        <div className="controls">
+                          <input type="text" data-id={this.props.id} data-entity="jobs" data-type="end_date" className="datepicker" ref="end_date" value={this.props.end_date} onChange={this.handleChange} />
+                        </div>                      
+                      </div>
+                    </div>
+                  </div>
+                  <div className="clearfix"></div>
+                </div>
+				<textarea rows="4" value={this.props.description} onChange={this.handleChange} ref="description" id={"tinymcejob"+this.props.id}></textarea>
+				<div className="content" dangerouslySetInnerHTML={{__html: this.props.description}}></div>
+                <ul>
+                  <li><strong>Role:</strong> <span className="title">{this.props.role}</span><input ref="role" type="text" className="input" value={this.props.role} onChange={this.handleChange} /></li>
+                  <li><strong>Main tech:</strong> <span className="title">{this.props.main_t}</span><textarea rows="2" ref="main_t" className="input fp-doublewidth" value={this.props.main_t} onChange={this.handleChange} /></li>
+                </ul>
+				<a className="btn btn-remove red" href="#" onClick={this.delNode}>
+					<i className="icon-remove"></i>  
+				</a>
+              </div>
+		);
+	}
+  });
+  
+  var ContentLanguages = React.createClass({		
+	handleChange: function(e){
+		this.props.handleChange(e);
+	},
+	
+	render: function() {
+		var that = this;
+		var i = -1;
+		var ContentLanguagesNodes = this.props.data.languages_attributes.map(function(node){
+			i++
+			if (node._destroy) return;
+			return (
+				<ContentLanguagesNode id={i} language={node.language} level={node.level} handleChange={that.handleChange} handleFormSubmit={that.props.handleFormSubmit} delNode={that.props.delLanguages} />
+			);
+		});  		
+		return (		
+			<div className="row">
+			  <div className="box span12 fp-summary">
+				<div className="box-header">
+				  <h2><i className="icon-flag"></i><span className="break"></span>Languages</h2>             
+				</div>
+				<div className="box-content">
+				 <table className="table table-striped table-bordered align-mid last-col-small table-editable">
+				  <tbody>
+					{ContentLanguagesNodes}
+				  </tbody>
+				  </table>                  
+				  <div className="form-actions">
+				  <button className="btn btn-success" onClick={this.props.addLanguages}>Add new language</button>
+				  </div>
+				</div>
+			  </div>
+			</div>		
+		);
+	}
+  });
+  
+  var ContentLanguagesNode = React.createClass({ 	
+	handleChange: function(e) {
+		var language = React.findDOMNode(this.refs.language).value;
+		var level = React.findDOMNode(this.refs.level).value;
+		this.props.handleChange({id: this.props.id, language: language, level: level});
+	},
+	
+	delNode: function(e) {
+		this.props.delNode(this.props.id);
+		e.preventDefault();
+	},
+	
+	handleFormSubmit: function(e) {
+		e.preventDefault();
+		this.props.handleFormSubmit();
+	},
+  
+	render: function() {
+		return (
+			<tr className="editing" ref="well">
+				<td><span className="title">{this.props.language}</span><input placeholder="Language" ref="language" className="input" type="text" value={this.props.language} onChange={this.handleChange} /></td>
+				<td>
+					<span className="title">{this.props.level}</span>
+					<div className="controls">
+                      <select ref="level" value={this.props.level} onChange={this.handleChange}>
+						  <option value="Basic user">Basic user</option>
+						  <option value="Independent user">Independent user</option>
+						  <option value="Proficient user">Proficient user</option>
+                      </select>
+                    </div>
+				</td>
+				<td>
+					<a className="btn btn-remove red" href="#" onClick={this.delNode}>
+					  <i className="icon-remove"></i>  
+					</a>
+				</td>
+			</tr>	
+		);
+	}
+  });
+	
+  var Popup = React.createClass({ 
+	
+	render: function(){
+		var title = "Are you sure?";
+		var text = "Are you sure you want to save and send data?";
+		var buttons = <div><a href="#" className="btn" data-dismiss="modal">No</a><a href="#" className="btn btn-primary" onClick={this.props.send}>Yes, save and send</a></div>;
+		if ($(".input.red").length) {
+			title = "Your form contains errors"
+			text = "Please, fill in all required fields. They are displayed as red."
+			buttons = <a href="#" className="btn" data-dismiss="modal">Got it</a>;
+		}
+	
+		return(
+			<div className="modal hide fade" id="areyousure">
+				<div className="modal-header">
+				  <button type="button" className="close" data-dismiss="modal">×</button>
+				  <h3>{title}</h3>
+				</div>
+				<div className="modal-body">		   
+					{text}
+				</div>
+				<div className="modal-footer">
+					{buttons}
+				</div>
+			</div>
+	 );
+	}
+  
+  });
+	  
+	/**
+	 * Function to print date diffs.
+	 * 
+	 * @param {Date} fromDate: The valid start date
+	 * @param {Date} toDate: The end date. Can be null (if so the function uses "now").
+	 * @param {Number} levels: The number of details you want to get out (1="in 2 Months",2="in 2 Months, 20 Days",...)
+	 * @param {Boolean} prefix: adds "in" or "ago" to the return string
+	 * @return {String} Diffrence between the two dates.
+	 */
+	function getNiceTime(fromDate, toDate, levels, prefix) {
+		var lang = {
+				"date.past": "{0} ago",
+				"date.future": "in {0}",
+				"date.now": "now",
+				"date.year": "{0} year",
+				"date.years": "{0} years",
+				"date.years.prefixed": "{0} years",
+				"date.month": "{0} month",
+				"date.months": "{0} months",
+				"date.months.prefixed": "{0} months",
+				"date.day": "{0} day",
+				"date.days": "{0} days",
+				"date.days.prefixed": "{0} days",
+				"date.hour": "{0} hour",
+				"date.hours": "{0} hours",
+				"date.hours.prefixed": "{0} hours",
+				"date.minute": "{0} minute",
+				"date.minutes": "{0} minutes",
+				"date.minutes.prefixed": "{0} minutes",
+				"date.second": "{0} second",
+				"date.seconds": "{0} seconds",
+				"date.seconds.prefixed": "{0} seconds",
+			},
+			langFn = function(id,params){
+				var returnValue = lang[id] || "";
+				if(params){
+					for(var i=0;i<params.length;i++){
+						returnValue = returnValue.replace("{"+i+"}",params[i]);
+					}
+				}
+				return returnValue;
+			},
+			toDate = toDate ? toDate : new Date(),
+			diff = fromDate - toDate,
+			past = diff < 0 ? true : false,
+			diff = diff < 0 ? diff * -1 : diff,
+			date = new Date(new Date(1970,0,1,0).getTime()+diff),
+			returnString = '',
+			count = 0,
+			years = (date.getFullYear() - 1970);
+		if(years > 0){
+			var langSingle = "date.year" + (prefix ? "" : ""),
+				langMultiple = "date.years" + (prefix ? ".prefixed" : "");
+			returnString += (count > 0 ?  ', ' : '') + (years > 1 ? langFn(langMultiple,[years]) : langFn(langSingle,[years]));
+			count ++;
+		}
+		var months = date.getMonth();
+		if(count < levels && months > 0){
+			var langSingle = "date.month" + (prefix ? "" : ""),
+				langMultiple = "date.months" + (prefix ? ".prefixed" : "");
+			returnString += (count > 0 ?  ', ' : '') + (months > 1 ? langFn(langMultiple,[months]) : langFn(langSingle,[months]));
+			count ++;
+		} else {
+			if(count > 0)
+				count = 99;
+		}
+		var days = date.getDate() - 1;
+		if(count < levels && days > 0){
+			var langSingle = "date.day" + (prefix ? "" : ""),
+				langMultiple = "date.days" + (prefix ? ".prefixed" : "");
+			returnString += (count > 0 ?  ', ' : '') + (days > 1 ? langFn(langMultiple,[days]) : langFn(langSingle,[days]));
+			count ++;
+		} else {
+			if(count > 0)
+				count = 99;
+		}
+		var hours = date.getHours();
+		if(count < levels && hours > 0){
+			var langSingle = "date.hour" + (prefix ? "" : ""),
+				langMultiple = "date.hours" + (prefix ? ".prefixed" : "");
+			returnString += (count > 0 ?  ', ' : '') + (hours > 1 ? langFn(langMultiple,[hours]) : langFn(langSingle,[hours]));
+			count ++;
+		} else {
+			if(count > 0)
+				count = 99;
+		}
+		var minutes = date.getMinutes();
+		if(count < levels && minutes > 0){
+			var langSingle = "date.minute" + (prefix ? "" : ""),
+				langMultiple = "date.minutes" + (prefix ? ".prefixed" : "");
+			returnString += (count > 0 ?  ', ' : '') + (minutes > 1 ? langFn(langMultiple,[minutes]) : langFn(langSingle,[minutes]));
+			count ++;
+		} else {
+			if(count > 0)
+				count = 99;
+		}
+		var seconds = date.getSeconds();
+		if(count < levels && seconds > 0){
+			var langSingle = "date.second" + (prefix ? "" : ""),
+				langMultiple = "date.seconds" + (prefix ? ".prefixed" : "");
+			returnString += (count > 0 ?  ', ' : '') + (seconds > 1 ? langFn(langMultiple,[seconds]) : langFn(langSingle,[seconds]));
+			count ++;
+		} else {
+			if(count > 0)
+				count = 99;
+		}
+		if(prefix){
+			if(returnString == ""){
+				returnString = langFn("date.now");
+			} else if(past)
+				returnString = langFn("date.past",[returnString]);
+			else
+				returnString = langFn("date.future",[returnString]);
+		}
+		return returnString;
+}
+
+	isEmpty = function(x) {
+		if(x!=null){ 
+			return true;
+		}else{ 
+			return false
+		} 
+	}
+  
+  React.render(
+	<User url="/users/client.json?token=<%= @user.token %>" />,
+    document.getElementById('reactContent')
+  );
+</script> 
